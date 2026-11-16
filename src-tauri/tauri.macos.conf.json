@@ -1,0 +1,16 @@
+{
+  "app": {
+    "windows": [
+      {
+        "title": "ScpCraft",
+        "width": 1380,
+        "height": 860,
+        "minWidth": 960,
+        "minHeight": 640,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "zoomHotkeysEnabled": true
+      }
+    ]
+  }
+}
