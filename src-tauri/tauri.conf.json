@@ -1,0 +1,63 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "ScpCraft",
+  "version": "0.1.7",
+  "identifier": "com.scpcraft.desktop",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "ScpCraft",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600,
+        "zoomHotkeysEnabled": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "Utility",
+    "copyright": "Copyright 2026 ScpCraft Contributors. Licensed under the Apache License, Version 2.0.",
+    "licenseFile": "../LICENSE",
+    "shortDescription": "Cross-platform dual-pane SFTP, SCP, FTP, WebDAV & S3 file transfer client",
+    "longDescription": "ScpCraft is a native cross-platform Commander/Explorer file manager and multi-protocol transfer client built with Tauri 2.0 (Rust + React/TypeScript), supporting SFTP/SCP, FTP/FTPS, Amazon S3/MinIO, WebDAV, integrated editor watch, SSH PTY terminal, and bidirectional directory synchronization.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      },
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "11.0"
+    },
+    "linux": {
+      "deb": {
+        "depends": [
+          "libwebkit2gtk-4.1-0",
+          "libgtk-3-0",
+          "libsecret-1-0"
+        ]
+      }
+    }
+  }
+}

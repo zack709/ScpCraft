@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    user-select: none;
+    font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Microsoft JhengHei UI", system-ui, sans-serif;
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* macOS native typography & comfortable HiDPI scaling */
+  html[data-platform="macos"],
+  html[data-platform="macos"] body,
+  html[data-platform="macos"] #root {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Helvetica Neue", sans-serif;
+    font-size: 15px;
+  }
+}
+
+/* Bump dense WinSCP micro-typography to comfortable macOS sizes */
+html[data-platform="macos"] .text-\[10px\] {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+html[data-platform="macos"] .text-\[11px\] {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+html[data-platform="macos"] .text-\[12px\],
+html[data-platform="macos"] .text-xs {
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+html[data-platform="macos"] .text-sm {
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.scpcraft-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scpcraft-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scpcraft-scroll::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 140, 0.35);
+  border-radius: 4px;
+}
+
+.scpcraft-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 140, 0.55);
+}
