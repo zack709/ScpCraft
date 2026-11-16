@@ -9,9 +9,12 @@ All notable changes to **ScpCraft** will be documented in this file.
   - Added a `portable` Cargo feature (`src-tauri/Cargo.toml`) and centralized config directory resolution (`app_config_dir` in `src-tauri/src/config/mod.rs`).
   - When running in portable mode (built with `--features portable`, or when a `config/` directory exists alongside the executable), ScpCraft creates and stores `preferences.json`, `sites.json`, `bookmarks.json`, and `custom_commands.json` inside `<exe_dir>/config/`.
   - Updated GitHub Actions (`.github/workflows/release.yml`) to build and upload `ScpCraft_<version>_x64-portable.zip` (Windows) and `ScpCraft_<version>_x64-linux-portable.tar.gz` (Linux) using `pnpm tauri build --no-bundle --features portable`.
+- **Private Key File Picker (`Browse...`)**: Added a native file picker button (`pick_private_key_file` using `rfd` in `src-tauri/src/local_fs.rs`, exposed via `siteApi.pickPrivateKeyFile`) next to both the main Private Key and SSH Tunnel Private Key fields in `AdvancedSiteModal.tsx`.
+- **Site Shell Setting & Elevated SFTP (`sudo su -`)**: Added `advanced.shell` (`預設`, `/bin/bash`, `/bin/ksh`, `/bin/sh`, `sudo su -`, or custom command) under `Environment -> SCP / Shell` in `AdvancedSiteModal.tsx`, persisted in `sites.json`. When configured with `sudo` (e.g. `sudo su -`), ScpCraft elevates both the SFTP file-pane session (`open_elevated_sftp_channel` in `src-tauri/src/sftp/session.rs`, supporting `sudo -n`, `sudo -n su` / `sudo -n su -` bootstrap, and `sudo -S` via keyring password) and the interactive SSH PTY terminal (`sftp_pty_open` in `src-tauri/src/sftp/shell.rs`).
 
 ### Changed
 - **Windows & Linux Typography Readability**: Applied the comfortable `15px` base font size and micro-typography scaling (`.text-[10px]`, `.text-[11px]`, `.text-xs`, `.text-sm`) in `src/App.css` across all platforms instead of macOS only.
+- **Expanded Traditional Chinese (`zh-TW`) Localization**: Localized the Login / Site Manager dialog (`SiteManagerModal.tsx`), Advanced Site Settings (`AdvancedSiteModal.tsx`), file panes (`FilePane.tsx`), function key bar (`FunctionKeyBar.tsx`), transfer queue dock (`TransferQueueDock.tsx`), host key / interactive auth modals (`HostKeyModal.tsx`, `InteractiveAuthModal.tsx`), overwrite confirmation (`OverwriteModal.tsx`), and create directory modal (`CreateDirModal.tsx`) via `src/i18n/index.ts`.
 
 ## [0.1.7] - 2026-11-16
 

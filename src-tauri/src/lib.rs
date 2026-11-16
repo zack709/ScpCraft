@@ -36,6 +36,7 @@ pub fn run() {
             local_fs::local_create_file,
             local_fs::local_rename,
             local_fs::local_delete,
+            local_fs::pick_private_key_file,
             local_fs::local_copy_or_move,
             local_fs::local_get_properties,
             config::site_repo::site_list,

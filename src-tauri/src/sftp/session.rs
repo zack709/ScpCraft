@@ -188,6 +188,7 @@ pub struct LiveSftpSession {
     pub host: String,
     pub user_name: String,
     pub home_path: String,
+    pub shell: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1175,6 +1176,175 @@ pub async fn continue_pending_auth(
     }
 }
 
+const SFTP_SERVER_DISCOVERY_SH: &str = "for p in /usr/lib/openssh/sftp-server /usr/libexec/openssh/sftp-server /usr/lib/ssh/sftp-server /usr/libexec/sftp-server /usr/sbin/sftp-server; do [ -x \"$p\" ] && exec \"$p\"; done; exec sftp-server";
+
+const SFTP_SU_BOOTSTRAP_LINE: &str = "SFTP_BIN=sftp-server; for p in /usr/lib/openssh/sftp-server /usr/libexec/openssh/sftp-server /usr/lib/ssh/sftp-server /usr/libexec/sftp-server /usr/sbin/sftp-server; do [ -x \"$p\" ] && SFTP_BIN=\"$p\" && break; done; echo __SCP_READY__; exec \"$SFTP_BIN\"\n";
+
+async fn try_sudo_su_sftp(
+    handle: &client::Handle<ScpCraftClientHandler>,
+    sudo_su_cmd: &str,
+) -> Result<russh::Channel<client::Msg>, String> {
+    let mut channel = handle
+        .channel_open_session()
+        .await
+        .map_err(|e| format!("Failed opening SSH channel for {}: {}", sudo_su_cmd, e))?;
+    channel
+        .exec(true, sudo_su_cmd.as_bytes().to_vec())
+        .await
+        .map_err(|e| format!("Failed executing {}: {}", sudo_su_cmd, e))?;
+    channel
+        .data(SFTP_SU_BOOTSTRAP_LINE.as_bytes())
+        .await
+        .map_err(|e| format!("Failed sending SFTP bootstrap to {}: {}", sudo_su_cmd, e))?;
+
+    let mut stdout_buf = Vec::new();
+    let mut stderr_buf = Vec::new();
+    let marker = b"__SCP_READY__\n";
+
+    let wait_res = tokio::time::timeout(std::time::Duration::from_secs(8), async {
+        while let Some(msg) = channel.wait().await {
+            match msg {
+                russh::ChannelMsg::Data { data } => {
+                    stdout_buf.extend_from_slice(&data);
+                    if stdout_buf
+                        .windows(marker.len())
+                        .any(|w| w == marker)
+                    {
+                        return Ok(());
+                    }
+                }
+                russh::ChannelMsg::ExtendedData { data, .. } => {
+                    stderr_buf.extend_from_slice(&data);
+                }
+                russh::ChannelMsg::Eof | russh::ChannelMsg::Close => {
+                    return Err(String::from_utf8_lossy(&stderr_buf).trim().to_string());
+                }
+                _ => {}
+            }
+        }
+        Err(String::from_utf8_lossy(&stderr_buf).trim().to_string())
+    })
+    .await;
+
+    match wait_res {
+        Ok(Ok(())) => Ok(channel),
+        Ok(Err(err)) => Err(if err.is_empty() {
+            format!("{} closed before sftp-server started", sudo_su_cmd)
+        } else {
+            err
+        }),
+        Err(_) => Err(format!("Timed out waiting for {} to start sftp-server", sudo_su_cmd)),
+    }
+}
+
+async fn probe_sudo_command(
+    handle: &client::Handle<ScpCraftClientHandler>,
+    cmd: &str,
+) -> Result<(Option<u32>, String), String> {
+    let mut probe = handle
+        .channel_open_session()
+        .await
+        .map_err(|e| format!("Failed opening SSH probe channel: {}", e))?;
+    probe
+        .exec(true, cmd.as_bytes().to_vec())
+        .await
+        .map_err(|e| format!("Failed probing sudo privileges: {}", e))?;
+
+    let mut exit_code: Option<u32> = None;
+    let mut stderr_buf = Vec::new();
+    while let Some(msg) = probe.wait().await {
+        match msg {
+            russh::ChannelMsg::ExitStatus { exit_status } => {
+                exit_code = Some(exit_status);
+            }
+            russh::ChannelMsg::ExtendedData { data, .. } => {
+                stderr_buf.extend_from_slice(&data);
+            }
+            russh::ChannelMsg::Eof | russh::ChannelMsg::Close => break,
+            _ => {}
+        }
+    }
+    let stderr_str = String::from_utf8_lossy(&stderr_buf).trim().to_string();
+    Ok((exit_code, stderr_str))
+}
+
+async fn open_elevated_sftp_channel(
+    handle: &client::Handle<ScpCraftClientHandler>,
+    site: &SiteConfig,
+) -> Result<russh::Channel<client::Msg>, String> {
+    let (probe_exit, probe_err) = probe_sudo_command(handle, "sudo -n true").await?;
+
+    if probe_exit == Some(0) {
+        let channel = handle
+            .channel_open_session()
+            .await
+            .map_err(|e| format!("Failed opening elevated SFTP channel: {}", e))?;
+        let cmd = format!("sudo -n sh -c '{}'", SFTP_SERVER_DISCOVERY_SH);
+        channel
+            .exec(true, cmd.into_bytes())
+            .await
+            .map_err(|e| format!("Failed starting elevated sftp-server: {}", e))?;
+        return Ok(channel);
+    }
+
+    // Some sudoers configs only allow `sudo su` / `sudo su -` (without -c) without password.
+    let shell_trimmed = site.advanced.shell.trim();
+    let mut su_candidates: Vec<String> = Vec::new();
+    if shell_trimmed.eq_ignore_ascii_case("sudo su -") {
+        su_candidates.push("sudo -n su -".to_string());
+        su_candidates.push("sudo -n su".to_string());
+    } else if shell_trimmed.eq_ignore_ascii_case("sudo su") {
+        su_candidates.push("sudo -n su".to_string());
+        su_candidates.push("sudo -n su -".to_string());
+    } else {
+        su_candidates.push("sudo -n su".to_string());
+        su_candidates.push("sudo -n su -".to_string());
+    }
+
+    let mut last_su_err = String::new();
+    for cand in &su_candidates {
+        match try_sudo_su_sftp(handle, cand).await {
+            Ok(ch) => return Ok(ch),
+            Err(e) => last_su_err = e,
+        }
+    }
+
+    let saved_pwd = if !site.id.trim().is_empty() {
+        keyring_store::get_site_secret(&site.id, "password").filter(|p| !p.is_empty())
+    } else {
+        None
+    };
+
+    if let Some(pwd) = saved_pwd {
+        let channel = handle
+            .channel_open_session()
+            .await
+            .map_err(|e| format!("Failed opening elevated SFTP channel: {}", e))?;
+        let cmd = format!("sudo -S -p '' sh -c '{}'", SFTP_SERVER_DISCOVERY_SH);
+        channel
+            .exec(true, cmd.into_bytes())
+            .await
+            .map_err(|e| format!("Failed starting elevated sftp-server with password: {}", e))?;
+        channel
+            .data(format!("{}\n", pwd).as_bytes())
+            .await
+            .map_err(|e| format!("Failed sending sudo password: {}", e))?;
+        return Ok(channel);
+    }
+
+    let detail = if !last_su_err.is_empty() {
+        last_su_err
+    } else if !probe_err.is_empty() {
+        probe_err
+    } else {
+        "exit status non-zero".to_string()
+    };
+    Err(format!(
+        "Elevated shell (sudo) failed ({}). Ensure NOPASSWD is enabled in /etc/sudoers or save the user password.",
+        detail
+    ))
+}
+
 pub async fn open_sftp_subsystem(
     handle: client::Handle<ScpCraftClientHandler>,
     tunnel_handle: Option<client::Handle<ScpCraftClientHandler>>,
@@ -1182,14 +1352,25 @@ pub async fn open_sftp_subsystem(
     site: &SiteConfig,
     method_used: String,
 ) -> Result<(LiveSftpSession, SftpConnectedInfo), String> {
-    let channel = handle
-        .channel_open_session()
-        .await
-        .map_err(|e| format!("Failed opening SSH session channel: {}", e))?;
-    channel
-        .request_subsystem(true, "sftp")
-        .await
-        .map_err(|e| format!("Failed requesting SFTP subsystem: {}", e))?;
+    let shell_trimmed = site.advanced.shell.trim();
+    let wants_sudo = shell_trimmed
+        .split_whitespace()
+        .next()
+        .map(|cmd| cmd.eq_ignore_ascii_case("sudo"))
+        .unwrap_or(false);
+
+    let channel = if wants_sudo {
+        open_elevated_sftp_channel(&handle, site).await?
+    } else {
+        let ch = handle
+            .channel_open_session()
+            .await
+            .map_err(|e| format!("Failed opening SSH session channel: {}", e))?;
+        ch.request_subsystem(true, "sftp")
+            .await
+            .map_err(|e| format!("Failed requesting SFTP subsystem: {}", e))?;
+        ch
+    };
 
     let sftp = SftpSession::new(channel.into_stream())
         .await
@@ -1221,6 +1402,7 @@ pub async fn open_sftp_subsystem(
         host: site.host_name.clone(),
         user_name: site.user_name.clone(),
         home_path: home_path.clone(),
+        shell: site.advanced.shell.trim().to_string(),
     };
 
     let info = SftpConnectedInfo {
@@ -1229,7 +1411,11 @@ pub async fn open_sftp_subsystem(
         initial_path,
         initial_listing,
         auth_method_used: method_used,
-        server_banner: format!("SSH-2.0 (SFTP via {})", site.host_name),
+        server_banner: if wants_sudo {
+            format!("SSH-2.0 (SFTP+sudo via {})", site.host_name)
+        } else {
+            format!("SSH-2.0 (SFTP via {})", site.host_name)
+        },
     };
 
     Ok((live, info))

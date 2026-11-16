@@ -164,4 +164,9 @@ export const siteApi = {
       includePassword,
     });
   },
+
+  async pickPrivateKeyFile(): Promise<string | null> {
+    if (!isTauriRuntime()) return null;
+    return invoke<string | null>('pick_private_key_file');
+  },
 };

@@ -94,6 +94,8 @@ pub struct SiteAdvancedConfig {
     pub timeout_secs: u32,
     pub utf8_encoding: String,
     pub eol_style: String,
+    #[serde(default)]
+    pub shell: String,
     pub s3_url_style: String,
     pub s3_region: String,
     pub tunnel: SshTunnelConfig,
@@ -112,6 +114,7 @@ impl Default for SiteAdvancedConfig {
             timeout_secs: 15,
             utf8_encoding: "auto".to_string(),
             eol_style: "lf".to_string(),
+            shell: String::new(),
             s3_url_style: "virtualHost".to_string(),
             s3_region: String::new(),
             tunnel: SshTunnelConfig::default(),

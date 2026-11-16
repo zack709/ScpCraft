@@ -20,6 +20,7 @@ import {
   Upload,
   X,
 } from 'lucide-react';
+import { translate, type TranslationKey } from '../../i18n';
 import { useSiteStore } from '../../stores/useSiteStore';
 import { useWorkspaceStore } from '../../stores/useWorkspaceStore';
 import { isMacOS } from '../../utils/platform';
@@ -56,7 +57,8 @@ function matchesSearch(site: SiteConfig, query: string, mode: SiteSearchMode): b
 }
 
 export function SiteManagerModal() {
-  const { theme } = useWorkspaceStore();
+  const { theme, locale } = useWorkspaceStore();
+  const t = (key: TranslationKey) => translate(locale, key);
   const isMac = isMacOS();
   const {
     isLoginDialogOpen,
@@ -226,7 +228,7 @@ export function SiteManagerModal() {
         >
           <div className="flex items-center gap-2 font-medium">
             <Monitor className="w-3.5 h-3.5 text-[#4da3ff]" />
-            <span>Login</span>
+            <span>{t('site.title')}</span>
           </div>
           <button
             type="button"
@@ -278,7 +280,7 @@ export function SiteManagerModal() {
                     <Monitor className="w-3.5 h-3.5 text-sky-400" />
                     <Sparkles className="w-2.5 h-2.5 text-amber-300 -ml-1 -mt-2" />
                   </span>
-                  <span className="truncate font-medium">New Site</span>
+                  <span className="truncate font-medium">{t('site.newSite')}</span>
                 </button>
 
                 {/* Expandable Folder Groups */}
@@ -400,7 +402,7 @@ export function SiteManagerModal() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search sites..."
+                  placeholder={t('site.searchPlaceholder')}
                   className="flex-1 bg-transparent text-[11px] outline-none min-w-0"
                 />
                 {searchQuery && (
@@ -408,7 +410,7 @@ export function SiteManagerModal() {
                     type="button"
                     onClick={() => setSearchQuery('')}
                     className="opacity-70 hover:opacity-100"
-                    title="Clear search"
+                    title={t('site.clearSearch')}
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -417,7 +419,7 @@ export function SiteManagerModal() {
                   <button
                     type="button"
                     onClick={() => setSearchMenuOpen((v) => !v)}
-                    title="Search mode"
+                    title={t('site.searchMode')}
                     className={`p-0.5 border ${
                       isDark
                         ? 'border-[#3f3f3f] hover:bg-[#333333]'
@@ -436,9 +438,9 @@ export function SiteManagerModal() {
                     >
                       {(
                         [
-                          ['prefix', 'Beginning of Site Name Only'],
-                          ['substring', 'Any Part of Site Name'],
-                          ['allFields', 'All Major Site Fields'],
+                          ['prefix', t('site.searchPrefix')],
+                          ['substring', t('site.searchSubstring')],
+                          ['allFields', t('site.searchAll')],
                         ] as [SiteSearchMode, string][]
                       ).map(([mode, label]) => (
                         <button
@@ -474,7 +476,7 @@ export function SiteManagerModal() {
                   onClick={() => setToolsOpen((v) => !v)}
                   className={`${dialogBtnCls} w-full justify-between`}
                 >
-                  <span>Tools</span>
+                  <span>{t('site.tools')}</span>
                   <ChevronDown className="w-3 h-3 opacity-75" />
                 </button>
                 {toolsOpen && (
@@ -496,7 +498,7 @@ export function SiteManagerModal() {
                       }`}
                     >
                       <Upload className="w-3.5 h-3.5 text-sky-400" />
-                      Import File (.yml)...
+                      {t('site.importFile')}
                     </button>
                     <button
                       type="button"
@@ -509,7 +511,7 @@ export function SiteManagerModal() {
                       }`}
                     >
                       <Plus className="w-3.5 h-3.5 text-emerald-400" />
-                      Paste YAML Contents...
+                      {t('site.pasteYaml')}
                     </button>
                     <div className={`my-1 border-t ${isDark ? 'border-[#3a3a3a]' : 'border-[#e0e0e0]'}`} />
                     <button
@@ -523,7 +525,7 @@ export function SiteManagerModal() {
                       }`}
                     >
                       <Download className="w-3.5 h-3.5 text-sky-400" />
-                      Export / Backup to YAML (.yml)...
+                      {t('site.exportYaml')}
                     </button>
                   </div>
                 )}
@@ -535,7 +537,7 @@ export function SiteManagerModal() {
                   onClick={() => setManageOpen((v) => !v)}
                   className={`${dialogBtnCls} w-full justify-between`}
                 >
-                  <span>Manage</span>
+                  <span>{t('site.manage')}</span>
                   <ChevronDown className="w-3 h-3 opacity-75" />
                 </button>
                 {manageOpen && (
@@ -557,7 +559,7 @@ export function SiteManagerModal() {
                         isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
                       }`}
                     >
-                      Edit
+                      {t('site.edit')}
                     </button>
                     <button
                       type="button"
@@ -565,7 +567,7 @@ export function SiteManagerModal() {
                         setManageOpen(false);
                         setSubPrompt({
                           kind: 'saveAs',
-                          name: draftSite.name || draftSite.hostName || 'New Site',
+                          name: draftSite.name || draftSite.hostName || t('site.newSite'),
                           folder: draftSite.folder ?? '',
                         });
                       }}
@@ -573,7 +575,7 @@ export function SiteManagerModal() {
                         isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
                       }`}
                     >
-                      Save As...
+                      {t('site.saveAs')}
                     </button>
                     <button
                       type="button"
@@ -586,7 +588,7 @@ export function SiteManagerModal() {
                         isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
                       }`}
                     >
-                      Rename...
+                      {t('site.rename')}
                     </button>
                     <button
                       type="button"
@@ -599,7 +601,7 @@ export function SiteManagerModal() {
                         isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
                       }`}
                     >
-                      Clone to New Site
+                      {t('site.clone')}
                     </button>
                     <button
                       type="button"
@@ -612,7 +614,7 @@ export function SiteManagerModal() {
                         isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
                       }`}
                     >
-                      Delete Site
+                      {t('site.deleteSite')}
                     </button>
                     <div className={`my-1 border-t ${isDark ? 'border-[#3a3a3a]' : 'border-[#e0e0e0]'}`} />
                     <button
@@ -625,7 +627,7 @@ export function SiteManagerModal() {
                         isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
                       }`}
                     >
-                      New Folder...
+                      {t('site.newFolder')}
                     </button>
                     {selection.kind === 'folder' && (
                       <button
@@ -638,7 +640,7 @@ export function SiteManagerModal() {
                           isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
                         }`}
                       >
-                        Delete Folder "{selection.folder}"
+                        {t('site.deleteFolder')} "{selection.folder}"
                       </button>
                     )}
                     <div className={`my-1 border-t ${isDark ? 'border-[#3a3a3a]' : 'border-[#e0e0e0]'}`} />
@@ -652,7 +654,7 @@ export function SiteManagerModal() {
                         isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
                       }`}
                     >
-                      Paste Session URL...
+                      {t('site.pasteUrl')}
                     </button>
                     <button
                       type="button"
@@ -665,7 +667,7 @@ export function SiteManagerModal() {
                         isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
                       }`}
                     >
-                      Generate Session URL/Code...
+                      {t('site.genUrl')}
                     </button>
                   </div>
                 )}
@@ -684,9 +686,9 @@ export function SiteManagerModal() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2 font-medium">
                     <Folder className="w-4 h-4 text-[#eab308]" />
-                    <span>Folder: {selection.folder}</span>
+                    <span>{t('site.folder')}: {selection.folder}</span>
                     <span className="text-[11px] opacity-65">
-                      ({folderChildren.length} site(s))
+                      ({folderChildren.length} {t('site.sitesCount')})
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -699,7 +701,7 @@ export function SiteManagerModal() {
                       className={dialogBtnCls}
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      New Site Here
+                      {t('site.newSiteHere')}
                     </button>
                     <button
                       type="button"
@@ -707,7 +709,7 @@ export function SiteManagerModal() {
                       className={`${dialogBtnCls} text-red-400`}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                      Remove Folder
+                      {t('site.removeFolder')}
                     </button>
                   </div>
                 </div>
@@ -715,7 +717,7 @@ export function SiteManagerModal() {
                 <div className="flex-1 overflow-y-auto grid grid-cols-2 gap-1.5 content-start">
                   {folderChildren.length === 0 ? (
                     <div className="col-span-2 text-center py-8 opacity-60">
-                      This folder has no sites yet.
+                      {t('site.emptyFolder')}
                     </div>
                   ) : (
                     folderChildren.map((child) => (
@@ -756,12 +758,12 @@ export function SiteManagerModal() {
                     isDark ? 'border-[#3f3f3f]' : 'border-[#c8c8c8]'
                   }`}
                 >
-                  <legend className="px-1 text-[11px] opacity-90">Session</legend>
+                  <legend className="px-1 text-[11px] opacity-90">{t('site.session')}</legend>
 
                   {/* Row 1: File protocol + Encryption */}
                   <div className="grid grid-cols-[1fr_180px] gap-2.5">
                     <div>
-                      <label className="block mb-1 opacity-90">File protocol:</label>
+                      <label className="block mb-1 opacity-90">{t('site.protocol')}</label>
                       <select
                         aria-label="File protocol"
                         disabled={!editable}
@@ -777,7 +779,7 @@ export function SiteManagerModal() {
                       </select>
                     </div>
                     <div>
-                      <label className="block mb-1 opacity-90">Encryption:</label>
+                      <label className="block mb-1 opacity-90">{t('site.encryption')}</label>
                       <select
                         aria-label="Encryption"
                         disabled={!editable || !encryptionEnabled}
@@ -785,9 +787,9 @@ export function SiteManagerModal() {
                         onChange={(e) => setFtpsMode(e.target.value as FtpsMode)}
                         className={inputCls}
                       >
-                        <option value="none">No encryption</option>
-                        <option value="implicit">TLS/SSL Implicit encryption</option>
-                        <option value="explicit">TLS/SSL Explicit encryption</option>
+                        <option value="none">{t('site.encNone')}</option>
+                        <option value="implicit">{t('site.encImplicit')}</option>
+                        <option value="explicit">{t('site.encExplicit')}</option>
                       </select>
                     </div>
                   </div>
@@ -796,7 +798,7 @@ export function SiteManagerModal() {
                   <div className="grid grid-cols-[1fr_92px] gap-2.5">
                     <div>
                       <label className="block mb-1 opacity-90">
-                        {draftSite.protocol === 's3' ? 'Endpoint Hostname:' : 'Host name:'}
+                        {draftSite.protocol === 's3' ? t('site.endpointHost') : t('site.hostName')}
                       </label>
                       <input
                         type="text"
@@ -812,7 +814,7 @@ export function SiteManagerModal() {
                       />
                     </div>
                     <div>
-                      <label className="block mb-1 opacity-90">Port number:</label>
+                      <label className="block mb-1 opacity-90">{t('site.portNumber')}</label>
                       <input
                         type="number"
                         min={1}
@@ -834,7 +836,7 @@ export function SiteManagerModal() {
                   <div className="grid grid-cols-2 gap-2.5">
                     <div>
                       <label className="block mb-1 opacity-90">
-                        {draftSite.protocol === 's3' ? 'Access key ID:' : 'User name:'}
+                        {draftSite.protocol === 's3' ? t('site.accessKeyId') : t('site.userName')}
                       </label>
                       <input
                         type="text"
@@ -853,15 +855,15 @@ export function SiteManagerModal() {
                     <div>
                       <label className="flex items-center justify-between mb-1 opacity-90">
                         <span>
-                          {draftSite.protocol === 's3' ? 'Secret access key:' : 'Password:'}
+                          {draftSite.protocol === 's3' ? t('site.secretAccessKey') : t('site.password')}
                         </span>
                         {draftSite.hasPassword && (
                           <span
                             className="inline-flex items-center gap-0.5 text-[10px] text-emerald-400"
-                            title="Stored in OS Keyring"
+                            title={t('site.keyringTip')}
                           >
                             <KeyRound className="w-2.5 h-2.5" />
-                            Keyring
+                            {t('site.keyring')}
                           </span>
                         )}
                       </label>
@@ -882,7 +884,7 @@ export function SiteManagerModal() {
                           type="button"
                           onClick={() => setShowPasswordText((v) => !v)}
                           className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100"
-                          title={showPasswordText ? 'Hide password' : 'Show password'}
+                          title={showPasswordText ? t('site.hidePassword') : t('site.showPassword')}
                         >
                           {showPasswordText ? (
                             <EyeOff className="w-3 h-3" />
@@ -909,7 +911,7 @@ export function SiteManagerModal() {
                           }))
                         }
                       />
-                      <span>Anonymous login</span>
+                      <span>{t('site.anonymousLogin')}</span>
                     </label>
                   )}
                   {draftSite.protocol === 's3' && (
@@ -925,7 +927,7 @@ export function SiteManagerModal() {
                           }))
                         }
                       />
-                      <span>Obtain credentials from AWS environment</span>
+                      <span>{t('site.s3EnvCreds')}</span>
                     </label>
                   )}
 
@@ -939,7 +941,7 @@ export function SiteManagerModal() {
                           className={`${dialogBtnCls} w-[108px]`}
                         >
                           <Edit3 className="w-3.5 h-3.5" />
-                          Edit
+                          {t('site.edit')}
                         </button>
                       ) : (
                         <>
@@ -951,7 +953,7 @@ export function SiteManagerModal() {
                                 onClick={() => void saveDraft()}
                                 className={`${dialogBtnCls} ${isMac ? 'min-w-[84px]' : 'w-[84px]'} font-medium`}
                               >
-                                Save
+                                {t('site.save')}
                               </button>
                               <button
                                 type="button"
@@ -959,20 +961,20 @@ export function SiteManagerModal() {
                                 onClick={() =>
                                   setSubPrompt({
                                     kind: 'saveAs',
-                                    name: draftSite.name || draftSite.hostName || 'New Site',
+                                    name: draftSite.name || draftSite.hostName || t('site.newSite'),
                                     folder: draftSite.folder ?? '',
                                   })
                                 }
                                 className={`${dialogBtnCls} ${isMac ? 'min-w-[96px]' : 'min-w-[80px]'}`}
                               >
-                                Save As...
+                                {t('site.saveAs')}
                               </button>
                               <button
                                 type="button"
                                 onClick={() => void cancelEditSelected()}
                                 className={`${dialogBtnCls} ${isMac ? 'min-w-[80px]' : 'w-[70px]'}`}
                               >
-                                Cancel
+                                {t('site.cancel')}
                               </button>
                             </>
                           ) : (
@@ -982,13 +984,13 @@ export function SiteManagerModal() {
                               onClick={() =>
                                 setSubPrompt({
                                   kind: 'saveAs',
-                                  name: draftSite.name || draftSite.hostName || 'New Site',
+                                  name: draftSite.name || draftSite.hostName || t('site.newSite'),
                                   folder: draftSite.folder ?? '',
                                 })
                               }
                               className={`${dialogBtnCls} ${isMac ? 'min-w-[108px]' : 'w-[108px]'} font-medium`}
                             >
-                              Save
+                              {t('site.save')}
                             </button>
                           )}
                         </>
@@ -1001,7 +1003,7 @@ export function SiteManagerModal() {
                       onClick={openAdvancedDialog}
                       className={`${dialogBtnCls} ${isMac ? 'min-w-[112px]' : 'w-[108px]'}`}
                     >
-                      Advanced...
+                      {t('site.advanced')}
                     </button>
                   </div>
                 </fieldset>
@@ -1012,12 +1014,12 @@ export function SiteManagerModal() {
                     isDark ? 'border-[#3f3f3f]' : 'border-[#c8c8c8]'
                   }`}
                 >
-                  <legend className="px-1 text-[11px] opacity-90">Note</legend>
+                  <legend className="px-1 text-[11px] opacity-90">{t('site.note')}</legend>
                   <textarea
                     disabled={!editable}
                     value={draftSite.note}
                     onChange={(e) => updateDraft((s) => ({ ...s, note: e.target.value }))}
-                    placeholder="Optional notes about this server (key info, maintenance notes...)"
+                    placeholder={t('site.notePlaceholder')}
                     className={`flex-1 w-full resize-none bg-transparent text-[11px] outline-none ${
                       !editable ? 'opacity-75' : ''
                     }`}
@@ -1055,7 +1057,7 @@ export function SiteManagerModal() {
               checked={showLoginOnStartup}
               onChange={(e) => void setShowLoginOnStartup(e.target.checked)}
             />
-            <span>Show Login dialog on startup and when the last session is closed</span>
+            <span>{t('site.showOnStartup')}</span>
           </label>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -1068,14 +1070,14 @@ export function SiteManagerModal() {
               } bg-[#1e4b85] hover:bg-[#255da3] disabled:opacity-45 text-white font-medium whitespace-nowrap inline-flex items-center justify-center gap-1.5 border border-[#2b6cb0]`}
             >
               <LogIn className="w-3.5 h-3.5 text-emerald-300" />
-              Login
+              {t('site.login')}
             </button>
             <button
               type="button"
               onClick={closeLoginDialog}
               className={`${dialogBtnCls} ${isMac ? 'min-w-[84px]' : 'w-[80px]'}`}
             >
-              Close
+              {t('site.close')}
             </button>
             <button
               type="button"
@@ -1083,7 +1085,7 @@ export function SiteManagerModal() {
               className={`${dialogBtnCls} ${isMac ? 'min-w-[84px]' : 'w-[80px]'}`}
             >
               <HelpCircle className="w-3.5 h-3.5" />
-              Help
+              {t('site.help')}
             </button>
           </div>
         </div>
@@ -1117,10 +1119,10 @@ export function SiteManagerModal() {
                 >
                   <div className="font-semibold flex items-center gap-2">
                     <FolderPlus className="w-4 h-4 text-[#4da3ff]" />
-                    Save Session As
+                    {t('site.saveSessionAs')}
                   </div>
                   <div>
-                    <label className="block mb-1">Site name:</label>
+                    <label className="block mb-1">{t('site.siteNameLabel')}</label>
                     <input
                       autoFocus
                       type="text"
@@ -1130,13 +1132,13 @@ export function SiteManagerModal() {
                     />
                   </div>
                   <div>
-                    <label className="block mb-1">Folder (optional, e.g. FoodCloud):</label>
+                    <label className="block mb-1">{t('site.folderLabel')}</label>
                     <input
                       type="text"
                       list="scpcraft-folder-options"
                       value={subPrompt.folder}
                       onChange={(e) => setSubPrompt({ ...subPrompt, folder: e.target.value })}
-                      placeholder="(root)"
+                      placeholder={t('site.rootFolderPlaceholder')}
                       className={inputCls}
                     />
                     <datalist id="scpcraft-folder-options">
@@ -1147,13 +1149,13 @@ export function SiteManagerModal() {
                   </div>
                   <div className="flex justify-end gap-2">
                     <button type="button" onClick={() => setSubPrompt(null)} className={dialogBtnCls}>
-                      Cancel
+                      {t('site.cancel')}
                     </button>
                     <button
                       type="submit"
                       className="h-[25px] px-4 bg-[#1e4b85] hover:bg-[#255da3] text-white"
                     >
-                      OK
+                      {t('site.ok')}
                     </button>
                   </div>
                 </form>
@@ -1167,7 +1169,7 @@ export function SiteManagerModal() {
                   }}
                   className="space-y-3"
                 >
-                  <div className="font-semibold">Rename Site</div>
+                  <div className="font-semibold">{t('site.renameSiteTitle')}</div>
                   <input
                     autoFocus
                     type="text"
@@ -1177,13 +1179,13 @@ export function SiteManagerModal() {
                   />
                   <div className="flex justify-end gap-2">
                     <button type="button" onClick={() => setSubPrompt(null)} className={dialogBtnCls}>
-                      Cancel
+                      {t('site.cancel')}
                     </button>
                     <button
                       type="submit"
                       className="h-[25px] px-4 bg-[#1e4b85] hover:bg-[#255da3] text-white"
                     >
-                      Rename
+                      {t('site.renameBtn')}
                     </button>
                   </div>
                 </form>
@@ -1197,24 +1199,24 @@ export function SiteManagerModal() {
                   }}
                   className="space-y-3"
                 >
-                  <div className="font-semibold">New Site Folder</div>
+                  <div className="font-semibold">{t('site.newFolderTitle')}</div>
                   <input
                     autoFocus
                     type="text"
-                    placeholder="e.g. Production / Cloud"
+                    placeholder={t('site.newFolderPlaceholder')}
                     value={subPrompt.name}
                     onChange={(e) => setSubPrompt({ ...subPrompt, name: e.target.value })}
                     className={inputCls}
                   />
                   <div className="flex justify-end gap-2">
                     <button type="button" onClick={() => setSubPrompt(null)} className={dialogBtnCls}>
-                      Cancel
+                      {t('site.cancel')}
                     </button>
                     <button
                       type="submit"
                       className="h-[25px] px-4 bg-[#1e4b85] hover:bg-[#255da3] text-white"
                     >
-                      Create
+                      {t('site.createBtn')}
                     </button>
                   </div>
                 </form>
@@ -1228,7 +1230,7 @@ export function SiteManagerModal() {
                   }}
                   className="space-y-3"
                 >
-                  <div className="font-semibold">Paste Session URL</div>
+                  <div className="font-semibold">{t('site.pasteUrlTitle')}</div>
                   <input
                     autoFocus
                     type="text"
@@ -1239,13 +1241,13 @@ export function SiteManagerModal() {
                   />
                   <div className="flex justify-end gap-2">
                     <button type="button" onClick={() => setSubPrompt(null)} className={dialogBtnCls}>
-                      Cancel
+                      {t('site.cancel')}
                     </button>
                     <button
                       type="submit"
                       className="h-[25px] px-4 bg-[#1e4b85] hover:bg-[#255da3] text-white"
                     >
-                      Load URL
+                      {t('site.loadUrlBtn')}
                     </button>
                   </div>
                 </form>
@@ -1253,38 +1255,38 @@ export function SiteManagerModal() {
 
               {subPrompt.kind === 'generateUrl' && (
                 <div className="space-y-3">
-                  <div className="font-semibold">Generated Session URL / Code</div>
+                  <div className="font-semibold">{t('site.genUrlTitle')}</div>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={subPrompt.includePwd}
                       onChange={(e) => void handleOpenGenerateUrl(e.target.checked)}
                     />
-                    <span>Include password in URL</span>
+                    <span>{t('site.includePwdInUrl')}</span>
                   </label>
                   <div>
-                    <div className="text-[11px] opacity-75 mb-1">Session URL:</div>
+                    <div className="text-[11px] opacity-75 mb-1">{t('site.sessionUrlLabel')}</div>
                     <div className="flex gap-1.5">
                       <input readOnly value={subPrompt.url} className={`${inputCls} font-mono`} />
                       <button
                         type="button"
                         onClick={() => void navigator.clipboard.writeText(subPrompt.url)}
                         className={dialogBtnCls}
-                        title="Copy URL"
+                        title={t('site.copyUrl')}
                       >
                         <Copy className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] opacity-75 mb-1">WinSCP Script / CLI Command:</div>
+                    <div className="text-[11px] opacity-75 mb-1">{t('site.cliCommandLabel')}</div>
                     <div className="flex gap-1.5">
                       <input readOnly value={subPrompt.cli} className={`${inputCls} font-mono`} />
                       <button
                         type="button"
                         onClick={() => void navigator.clipboard.writeText(subPrompt.cli)}
                         className={dialogBtnCls}
-                        title="Copy CLI"
+                        title={t('site.copyCli')}
                       >
                         <Copy className="w-3.5 h-3.5" />
                       </button>
@@ -1292,7 +1294,7 @@ export function SiteManagerModal() {
                   </div>
                   <div className="flex justify-end">
                     <button type="button" onClick={() => setSubPrompt(null)} className={dialogBtnCls}>
-                      Close
+                      {t('site.close')}
                     </button>
                   </div>
                 </div>
@@ -1300,7 +1302,7 @@ export function SiteManagerModal() {
 
               {subPrompt.kind === 'importYaml' && (
                 <div className="space-y-3">
-                  <div className="font-semibold">Paste ScpCraft YAML (.yml)</div>
+                  <div className="font-semibold">{t('site.importYamlTitle')}</div>
                   <textarea
                     rows={9}
                     value={subPrompt.text}
@@ -1312,7 +1314,7 @@ export function SiteManagerModal() {
                   />
                   <div className="flex justify-end gap-2">
                     <button type="button" onClick={() => setSubPrompt(null)} className={dialogBtnCls}>
-                      Cancel
+                      {t('site.cancel')}
                     </button>
                     <button
                       type="button"
@@ -1321,7 +1323,7 @@ export function SiteManagerModal() {
                       }
                       className="h-[25px] px-4 bg-[#1e4b85] hover:bg-[#255da3] text-white"
                     >
-                      Import
+                      {t('site.importBtn')}
                     </button>
                   </div>
                 </div>
@@ -1329,9 +1331,9 @@ export function SiteManagerModal() {
 
               {subPrompt.kind === 'exportYaml' && (
                 <div className="space-y-3">
-                  <div className="font-semibold">Export Sites to YAML (.yml)</div>
+                  <div className="font-semibold">{t('site.exportYamlTitle')}</div>
                   <p className="text-[11px] opacity-80">
-                    Passwords and secret keys are never included in YAML exports.
+                    {t('site.exportYamlNote')}
                   </p>
                   <textarea
                     readOnly
@@ -1356,7 +1358,7 @@ export function SiteManagerModal() {
                       className={dialogBtnCls}
                     >
                       <Download className="w-3.5 h-3.5" />
-                      Download scpcraft-sites.yml
+                      {t('site.downloadYaml')}
                     </button>
                     <button
                       type="button"
@@ -1364,10 +1366,10 @@ export function SiteManagerModal() {
                       className={dialogBtnCls}
                     >
                       <Copy className="w-3.5 h-3.5" />
-                      Copy All
+                      {t('site.copyAll')}
                     </button>
                     <button type="button" onClick={() => setSubPrompt(null)} className={dialogBtnCls}>
-                      Close
+                      {t('site.close')}
                     </button>
                   </div>
                 </div>
@@ -1375,21 +1377,15 @@ export function SiteManagerModal() {
 
               {subPrompt.kind === 'help' && (
                 <div className="space-y-2.5">
-                  <div className="font-semibold">Site Manager Help</div>
+                  <div className="font-semibold">{t('site.helpTitle')}</div>
                   <ul className="list-disc pl-4 space-y-1 opacity-85 leading-relaxed">
-                    <li>
-                      <b>WinSCP Import</b>: Use <code>Tools ▸ Import from WinSCP Registry</code> on Windows or import any exported <code>WinSCP.ini</code> file.
-                    </li>
-                    <li>
-                      <b>Credential Security</b>: Passwords and key passphrases are stored in your OS Keyring (Windows Credential Vault / macOS Keychain / Secret Service) and never written in plaintext to <code>sites.json</code>.
-                    </li>
-                    <li>
-                      <b>Shortcuts</b>: Double-click any site in the tree to connect in a new tab immediately; press <code>Ctrl+N</code> in the main workspace to reopen this Login dialog.
-                    </li>
+                    <li>{t('site.helpYaml')}</li>
+                    <li>{t('site.helpSecurity')}</li>
+                    <li>{t('site.helpShortcuts')}</li>
                   </ul>
                   <div className="flex justify-end">
                     <button type="button" onClick={() => setSubPrompt(null)} className={dialogBtnCls}>
-                      OK
+                      {t('site.ok')}
                     </button>
                   </div>
                 </div>

@@ -23,6 +23,7 @@ export interface SiteAdvancedConfig {
   timeoutSecs: number;
   utf8Encoding: string;
   eolStyle: string;
+  shell: string;
   s3UrlStyle: string;
   s3Region: string;
   tunnel: SshTunnelConfig;
@@ -116,6 +117,7 @@ export function createEmptySiteConfig(): SiteConfig {
       timeoutSecs: 15,
       utf8Encoding: 'auto',
       eolStyle: 'lf',
+      shell: '',
       s3UrlStyle: 'virtualHost',
       s3Region: '',
       tunnel: {

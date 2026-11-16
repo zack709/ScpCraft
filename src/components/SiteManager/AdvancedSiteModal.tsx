@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Folder, KeyRound, Network, Palette, Server, Settings2, Shield, X } from 'lucide-react';
+import { Folder, FolderOpen, KeyRound, Network, Palette, Server, Settings2, Shield, X } from 'lucide-react';
+import { translate, type TranslationKey } from '../../i18n';
+import { siteApi } from '../../services/siteApi';
 import { useSiteStore } from '../../stores/useSiteStore';
 import { useWorkspaceStore } from '../../stores/useWorkspaceStore';
 
@@ -12,18 +14,19 @@ type AdvancedCategory =
   | 'protocols'
   | 'note';
 
-const COLOR_SWATCHES = [
-  { label: 'Default', value: null },
-  { label: 'Blue', value: '#3b82f6' },
-  { label: 'Green', value: '#22c55e' },
-  { label: 'Amber', value: '#f59e0b' },
-  { label: 'Red', value: '#ef4444' },
-  { label: 'Purple', value: '#a855f7' },
-  { label: 'Cyan', value: '#06b6d4' },
+const COLOR_SWATCHES: { labelKey: TranslationKey; value: string | null }[] = [
+  { labelKey: 'adv.color.default', value: null },
+  { labelKey: 'adv.color.blue', value: '#3b82f6' },
+  { labelKey: 'adv.color.green', value: '#22c55e' },
+  { labelKey: 'adv.color.amber', value: '#f59e0b' },
+  { labelKey: 'adv.color.red', value: '#ef4444' },
+  { labelKey: 'adv.color.purple', value: '#a855f7' },
+  { labelKey: 'adv.color.cyan', value: '#06b6d4' },
 ];
 
 export function AdvancedSiteModal() {
-  const { theme } = useWorkspaceStore();
+  const { theme, locale } = useWorkspaceStore();
+  const t = (key: TranslationKey) => translate(locale, key);
   const {
     isAdvancedDialogOpen,
     closeAdvancedDialog,
@@ -54,16 +57,41 @@ export function AdvancedSiteModal() {
   }`;
 
   const navItems: { id: AdvancedCategory; label: string; group: string; icon: React.ReactNode }[] = [
-    { id: 'directories', label: 'Directories', group: 'Environment', icon: <Folder className="w-3.5 h-3.5 text-amber-400" /> },
-    { id: 'environment', label: 'Environment', group: 'Environment', icon: <Settings2 className="w-3.5 h-3.5 text-sky-400" /> },
-    { id: 'connection', label: 'Connection', group: 'Connection', icon: <Network className="w-3.5 h-3.5 text-emerald-400" /> },
-    { id: 'authentication', label: 'Authentication', group: 'SSH', icon: <KeyRound className="w-3.5 h-3.5 text-amber-300" /> },
-    { id: 'tunnel', label: 'Tunnel', group: 'SSH', icon: <Shield className="w-3.5 h-3.5 text-[#4da3ff]" /> },
-    { id: 'protocols', label: 'FTP / S3 / WebDAV', group: 'Protocols', icon: <Server className="w-3.5 h-3.5 text-purple-400" /> },
-    { id: 'note', label: 'Note & Color', group: 'Other', icon: <Palette className="w-3.5 h-3.5 text-pink-400" /> },
+    { id: 'directories', label: t('adv.nav.directories'), group: t('adv.group.env'), icon: <Folder className="w-3.5 h-3.5 text-amber-400" /> },
+    { id: 'environment', label: t('adv.nav.environment'), group: t('adv.group.env'), icon: <Settings2 className="w-3.5 h-3.5 text-sky-400" /> },
+    { id: 'connection', label: t('adv.nav.connection'), group: t('adv.group.conn'), icon: <Network className="w-3.5 h-3.5 text-emerald-400" /> },
+    { id: 'authentication', label: t('adv.nav.authentication'), group: t('adv.group.ssh'), icon: <KeyRound className="w-3.5 h-3.5 text-amber-300" /> },
+    { id: 'tunnel', label: t('adv.nav.tunnel'), group: t('adv.group.ssh'), icon: <Shield className="w-3.5 h-3.5 text-[#4da3ff]" /> },
+    { id: 'protocols', label: t('adv.nav.protocols'), group: t('adv.group.proto'), icon: <Server className="w-3.5 h-3.5 text-purple-400" /> },
+    { id: 'note', label: t('adv.nav.note'), group: t('adv.group.other'), icon: <Palette className="w-3.5 h-3.5 text-pink-400" /> },
   ];
 
   const adv = draftSite.advanced;
+
+  const browseBtnCls = `px-2.5 py-1 border text-xs whitespace-nowrap inline-flex items-center gap-1 shrink-0 transition-colors ${
+    isDark
+      ? 'bg-[#2d2d30] border-[#454545] text-[#e0e0e0] hover:bg-[#3a3a3e] disabled:opacity-45 disabled:pointer-events-none'
+      : 'bg-[#e1e1e1] border-[#adadad] text-[#1e1e1e] hover:bg-[#e5f1fb] hover:border-[#0078d7] disabled:opacity-45 disabled:pointer-events-none'
+  }`;
+
+  const handleBrowseKey = async (target: 'main' | 'tunnel') => {
+    const picked = await siteApi.pickPrivateKeyFile();
+    if (!picked) return;
+    if (target === 'main') {
+      updateDraft((s) => ({
+        ...s,
+        advanced: { ...s.advanced, privateKeyPath: picked },
+      }));
+    } else {
+      updateDraft((s) => ({
+        ...s,
+        advanced: {
+          ...s.advanced,
+          tunnel: { ...s.advanced.tunnel, privateKeyPath: picked },
+        },
+      }));
+    }
+  };
 
   return (
     <div
@@ -88,7 +116,7 @@ export function AdvancedSiteModal() {
           <div className="flex items-center gap-2 font-medium">
             <Settings2 className="w-3.5 h-3.5 text-[#4da3ff]" />
             <span>
-              Advanced Site Settings{draftSite.name ? ` — ${draftSite.name}` : ''}
+              {t('adv.title')}{draftSite.name ? ` — ${draftSite.name}` : ''}
             </span>
           </div>
           <button
@@ -146,9 +174,9 @@ export function AdvancedSiteModal() {
           <div className="flex-1 overflow-y-auto pr-0.5 space-y-3">
             {category === 'directories' && (
               <div className={groupCls}>
-                <div className="font-semibold text-[11px] opacity-90">Directories</div>
+                <div className="font-semibold text-[11px] opacity-90">{t('adv.nav.directories')}</div>
                 <div>
-                  <label className="block mb-1 opacity-85">Remote directory:</label>
+                  <label className="block mb-1 opacity-85">{t('adv.remoteDir')}</label>
                   <input
                     type="text"
                     disabled={!editable}
@@ -164,7 +192,7 @@ export function AdvancedSiteModal() {
                   />
                 </div>
                 <div>
-                  <label className="block mb-1 opacity-85">Local directory:</label>
+                  <label className="block mb-1 opacity-85">{t('adv.localDir')}</label>
                   <input
                     type="text"
                     disabled={!editable}
@@ -179,58 +207,122 @@ export function AdvancedSiteModal() {
                     className={`${inputCls} font-mono`}
                   />
                   <div className="text-[10px] opacity-65 mt-1">
-                    Applied to Local Pane automatically when opening a Commander session.
+                    {t('adv.localDirHint')}
                   </div>
                 </div>
               </div>
             )}
 
             {category === 'environment' && (
-              <div className={groupCls}>
-                <div className="font-semibold text-[11px] opacity-90">Server environment</div>
-                <div className="grid grid-cols-[1fr_140px] items-center gap-2">
-                  <span>End-of-line characters (if not indicated by server):</span>
-                  <select
-                    disabled={!editable}
-                    value={adv.eolStyle}
-                    onChange={(e) =>
-                      updateDraft((s) => ({
-                        ...s,
-                        advanced: { ...s.advanced, eolStyle: e.target.value },
-                      }))
-                    }
-                    className={inputCls}
-                  >
-                    <option value="lf">LF (Unix)</option>
-                    <option value="crlf">CR/LF (Windows)</option>
-                  </select>
+              <>
+                <div className={groupCls}>
+                  <div className="font-semibold text-[11px] opacity-90">{t('adv.serverEnv')}</div>
+                  <div className="grid grid-cols-[1fr_140px] items-center gap-2">
+                    <span>{t('adv.eolLabel')}</span>
+                    <select
+                      disabled={!editable}
+                      value={adv.eolStyle}
+                      onChange={(e) =>
+                        updateDraft((s) => ({
+                          ...s,
+                          advanced: { ...s.advanced, eolStyle: e.target.value },
+                        }))
+                      }
+                      className={inputCls}
+                    >
+                      <option value="lf">LF (Unix)</option>
+                      <option value="crlf">CR/LF (Windows)</option>
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-[1fr_140px] items-center gap-2">
+                    <span>{t('adv.utf8Label')}</span>
+                    <select
+                      disabled={!editable}
+                      value={adv.utf8Encoding}
+                      onChange={(e) =>
+                        updateDraft((s) => ({
+                          ...s,
+                          advanced: { ...s.advanced, utf8Encoding: e.target.value },
+                        }))
+                      }
+                      className={inputCls}
+                    >
+                      <option value="auto">{t('adv.utf8Auto')}</option>
+                      <option value="on">{t('adv.utf8On')}</option>
+                      <option value="off">{t('adv.utf8Off')}</option>
+                    </select>
+                  </div>
                 </div>
-                <div className="grid grid-cols-[1fr_140px] items-center gap-2">
-                  <span>UTF-8 encoding for filenames:</span>
-                  <select
-                    disabled={!editable}
-                    value={adv.utf8Encoding}
-                    onChange={(e) =>
-                      updateDraft((s) => ({
-                        ...s,
-                        advanced: { ...s.advanced, utf8Encoding: e.target.value },
-                      }))
-                    }
-                    className={inputCls}
-                  >
-                    <option value="auto">Auto</option>
-                    <option value="on">On</option>
-                    <option value="off">Off</option>
-                  </select>
+
+                <div className={groupCls}>
+                  <div className="font-semibold text-[11px] opacity-90">{t('adv.shellSection')}</div>
+                  {(() => {
+                    const presets = ['', '/bin/bash', '/bin/ksh', '/bin/sh', 'sudo su -'];
+                    const currentShell = adv.shell ?? '';
+                    const isPreset = presets.includes(currentShell);
+                    return (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-[1fr_200px] items-center gap-2">
+                          <span>{t('adv.shellLabel')}</span>
+                          <select
+                            disabled={!editable}
+                            value={isPreset ? currentShell : '__custom__'}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === '__custom__') {
+                                if (isPreset) {
+                                  updateDraft((s) => ({
+                                    ...s,
+                                    advanced: { ...s.advanced, shell: 'sudo -i' },
+                                  }));
+                                }
+                              } else {
+                                updateDraft((s) => ({
+                                  ...s,
+                                  advanced: { ...s.advanced, shell: val },
+                                }));
+                              }
+                            }}
+                            className={inputCls}
+                          >
+                            <option value="">{t('adv.shellDefault')}</option>
+                            <option value="/bin/bash">/bin/bash</option>
+                            <option value="/bin/ksh">/bin/ksh</option>
+                            <option value="/bin/sh">/bin/sh</option>
+                            <option value="sudo su -">sudo su -</option>
+                            <option value="__custom__">{t('adv.shellCustom')}</option>
+                          </select>
+                        </div>
+                        {!isPreset && (
+                          <input
+                            type="text"
+                            disabled={!editable}
+                            value={currentShell}
+                            onChange={(e) =>
+                              updateDraft((s) => ({
+                                ...s,
+                                advanced: { ...s.advanced, shell: e.target.value },
+                              }))
+                            }
+                            placeholder="sudo su -"
+                            className={`${inputCls} font-mono`}
+                          />
+                        )}
+                        <div className="text-[10px] opacity-65">
+                          {t('adv.shellHint')}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
-              </div>
+              </>
             )}
 
             {category === 'connection' && (
               <div className={groupCls}>
-                <div className="font-semibold text-[11px] opacity-90">Connection</div>
+                <div className="font-semibold text-[11px] opacity-90">{t('adv.nav.connection')}</div>
                 <div className="grid grid-cols-[1fr_110px] items-center gap-2">
-                  <span>Seconds between keepalives (0 to disable):</span>
+                  <span>{t('adv.keepaliveSecs')}</span>
                   <input
                     type="number"
                     min={0}
@@ -250,7 +342,7 @@ export function AdvancedSiteModal() {
                   />
                 </div>
                 <div className="grid grid-cols-[1fr_110px] items-center gap-2">
-                  <span>Server response timeout (seconds):</span>
+                  <span>{t('adv.timeoutSecs')}</span>
                   <input
                     type="number"
                     min={1}
@@ -275,7 +367,7 @@ export function AdvancedSiteModal() {
             {category === 'authentication' && (
               <>
                 <div className={groupCls}>
-                  <div className="font-semibold text-[11px] opacity-90">Authentication options</div>
+                  <div className="font-semibold text-[11px] opacity-90">{t('adv.authOptions')}</div>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -288,7 +380,7 @@ export function AdvancedSiteModal() {
                         }))
                       }
                     />
-                    <span>Attempt authentication using Pageant / SSH agent</span>
+                    <span>{t('adv.useSshAgent')}</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -302,40 +394,52 @@ export function AdvancedSiteModal() {
                         }))
                       }
                     />
-                    <span>Allow agent forwarding</span>
+                    <span>{t('adv.agentForwarding')}</span>
                   </label>
                 </div>
 
                 <div className={groupCls}>
-                  <div className="font-semibold text-[11px] opacity-90">Authentication parameters</div>
+                  <div className="font-semibold text-[11px] opacity-90">{t('adv.authParams')}</div>
                   <div>
                     <label className="block mb-1 opacity-85">
-                      Private key file (.ppk / OpenSSH id_ed25519 / id_rsa):
+                      {t('adv.privateKeyFile')}
                     </label>
-                    <input
-                      type="text"
-                      disabled={!editable}
-                      value={adv.privateKeyPath}
-                      onChange={(e) =>
-                        updateDraft((s) => ({
-                          ...s,
-                          advanced: { ...s.advanced, privateKeyPath: e.target.value },
-                        }))
-                      }
-                      placeholder="C:\Users\name\.ssh\id_ed25519"
-                      className={`${inputCls} font-mono`}
-                    />
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        disabled={!editable}
+                        value={adv.privateKeyPath}
+                        onChange={(e) =>
+                          updateDraft((s) => ({
+                            ...s,
+                            advanced: { ...s.advanced, privateKeyPath: e.target.value },
+                          }))
+                        }
+                        placeholder="C:\Users\name\.ssh\id_ed25519"
+                        className={`${inputCls} font-mono`}
+                      />
+                      <button
+                        type="button"
+                        disabled={!editable}
+                        onClick={() => void handleBrowseKey('main')}
+                        className={browseBtnCls}
+                        title={t('adv.browseFile')}
+                      >
+                        <FolderOpen className="w-3.5 h-3.5 text-amber-400" />
+                        <span>{t('adv.browseFile')}</span>
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="block mb-1 opacity-85">
-                      Private key passphrase (stored in OS Keyring, omitted from sites.json):
+                      {t('adv.passphrase')}
                     </label>
                     <input
                       type="password"
                       disabled={!editable}
                       value={draftPassphrase}
                       onChange={(e) => setDraftPassphrase(e.target.value)}
-                      placeholder={draftSite.hasPassphrase ? '•••••••• (saved in Keyring)' : ''}
+                      placeholder={draftSite.hasPassphrase ? t('adv.savedInKeyring') : ''}
                       className={inputCls}
                     />
                   </div>
@@ -360,12 +464,12 @@ export function AdvancedSiteModal() {
                       }))
                     }
                   />
-                  <span>Connect through SSH tunnel (Jump Host)</span>
+                  <span>{t('adv.tunnelEnable')}</span>
                 </label>
 
                 <div className="grid grid-cols-[1fr_90px] gap-2 pt-1">
                   <div>
-                    <label className="block mb-1 opacity-85">Tunnel Hostname:</label>
+                    <label className="block mb-1 opacity-85">{t('adv.tunnelHost')}</label>
                     <input
                       type="text"
                       disabled={!editable || !adv.tunnel.enabled}
@@ -383,7 +487,7 @@ export function AdvancedSiteModal() {
                     />
                   </div>
                   <div>
-                    <label className="block mb-1 opacity-85">Port number:</label>
+                    <label className="block mb-1 opacity-85">{t('site.portNumber')}</label>
                     <input
                       type="number"
                       min={1}
@@ -409,7 +513,7 @@ export function AdvancedSiteModal() {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block mb-1 opacity-85">Username:</label>
+                    <label className="block mb-1 opacity-85">{t('adv.tunnelUser')}</label>
                     <input
                       type="text"
                       disabled={!editable || !adv.tunnel.enabled}
@@ -427,7 +531,7 @@ export function AdvancedSiteModal() {
                     />
                   </div>
                   <div>
-                    <label className="block mb-1 opacity-85">Tunnel Password:</label>
+                    <label className="block mb-1 opacity-85">{t('adv.tunnelPwd')}</label>
                     <input
                       type="password"
                       disabled={!editable || !adv.tunnel.enabled}
@@ -440,25 +544,37 @@ export function AdvancedSiteModal() {
 
                 <div className="grid grid-cols-[1fr_110px] gap-2">
                   <div>
-                    <label className="block mb-1 opacity-85">Tunnel Private key file:</label>
-                    <input
-                      type="text"
-                      disabled={!editable || !adv.tunnel.enabled}
-                      value={adv.tunnel.privateKeyPath}
-                      onChange={(e) =>
-                        updateDraft((s) => ({
-                          ...s,
-                          advanced: {
-                            ...s.advanced,
-                            tunnel: { ...s.advanced.tunnel, privateKeyPath: e.target.value },
-                          },
-                        }))
-                      }
-                      className={`${inputCls} font-mono`}
-                    />
+                    <label className="block mb-1 opacity-85">{t('adv.tunnelKey')}</label>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        disabled={!editable || !adv.tunnel.enabled}
+                        value={adv.tunnel.privateKeyPath}
+                        onChange={(e) =>
+                          updateDraft((s) => ({
+                            ...s,
+                            advanced: {
+                              ...s.advanced,
+                              tunnel: { ...s.advanced.tunnel, privateKeyPath: e.target.value },
+                            },
+                          }))
+                        }
+                        className={`${inputCls} font-mono`}
+                      />
+                      <button
+                        type="button"
+                        disabled={!editable || !adv.tunnel.enabled}
+                        onClick={() => void handleBrowseKey('tunnel')}
+                        className={browseBtnCls}
+                        title={t('adv.browseFile')}
+                      >
+                        <FolderOpen className="w-3.5 h-3.5 text-amber-400" />
+                        <span>{t('adv.browseFile')}</span>
+                      </button>
+                    </div>
                   </div>
                   <div>
-                    <label className="block mb-1 opacity-85">Local port (0=auto):</label>
+                    <label className="block mb-1 opacity-85">{t('adv.tunnelLocalPort')}</label>
                     <input
                       type="number"
                       min={0}
@@ -487,7 +603,7 @@ export function AdvancedSiteModal() {
             {category === 'protocols' && (
               <>
                 <div className={groupCls}>
-                  <div className="font-semibold text-[11px] opacity-90">FTP Options</div>
+                  <div className="font-semibold text-[11px] opacity-90">{t('adv.ftpOptions')}</div>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -500,15 +616,15 @@ export function AdvancedSiteModal() {
                         }))
                       }
                     />
-                    <span>Passive mode (PASV)</span>
+                    <span>{t('adv.ftpPassive')}</span>
                   </label>
                 </div>
 
                 <div className={groupCls}>
-                  <div className="font-semibold text-[11px] opacity-90">Amazon S3 Options</div>
+                  <div className="font-semibold text-[11px] opacity-90">{t('adv.s3Options')}</div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block mb-1 opacity-85">Default region:</label>
+                      <label className="block mb-1 opacity-85">{t('adv.s3Region')}</label>
                       <input
                         type="text"
                         disabled={!editable}
@@ -524,7 +640,7 @@ export function AdvancedSiteModal() {
                       />
                     </div>
                     <div>
-                      <label className="block mb-1 opacity-85">URL style:</label>
+                      <label className="block mb-1 opacity-85">{t('adv.s3UrlStyle')}</label>
                       <select
                         disabled={!editable}
                         value={adv.s3UrlStyle}
@@ -536,13 +652,13 @@ export function AdvancedSiteModal() {
                         }
                         className={inputCls}
                       >
-                        <option value="virtualHost">Virtual host</option>
-                        <option value="path">Path</option>
+                        <option value="virtualHost">{t('adv.s3VirtualHost')}</option>
+                        <option value="path">{t('adv.s3Path')}</option>
                       </select>
                     </div>
                   </div>
                   <div>
-                    <label className="block mb-1 opacity-85">AWS Profile name:</label>
+                    <label className="block mb-1 opacity-85">{t('adv.s3Profile')}</label>
                     <input
                       type="text"
                       disabled={!editable}
@@ -560,13 +676,13 @@ export function AdvancedSiteModal() {
 
             {category === 'note' && (
               <div className={groupCls}>
-                <div className="font-semibold text-[11px] opacity-90">Tab / Site Color & Note</div>
+                <div className="font-semibold text-[11px] opacity-90">{t('adv.colorAndNote')}</div>
                 <div className="flex items-center gap-1.5 flex-wrap">
                   {COLOR_SWATCHES.map((sw) => {
                     const selected = draftSite.color === sw.value;
                     return (
                       <button
-                        key={sw.label}
+                        key={sw.labelKey}
                         type="button"
                         disabled={!editable}
                         onClick={() => updateDraft((s) => ({ ...s, color: sw.value }))}
@@ -582,13 +698,13 @@ export function AdvancedSiteModal() {
                           className="w-2.5 h-2.5 rounded-full border border-black/30"
                           style={{ backgroundColor: sw.value ?? 'transparent' }}
                         />
-                        {sw.label}
+                        {t(sw.labelKey)}
                       </button>
                     );
                   })}
                 </div>
                 <div>
-                  <label className="block mb-1 opacity-85">Site Note:</label>
+                  <label className="block mb-1 opacity-85">{t('adv.siteNote')}</label>
                   <textarea
                     rows={8}
                     disabled={!editable}
@@ -609,9 +725,7 @@ export function AdvancedSiteModal() {
           }`}
         >
           <span className="text-[11px] opacity-70">
-            {editable
-              ? 'Changes update the active draft; click Save in Site Manager to persist.'
-              : 'Read-only preview — click Edit in Site Manager to modify.'}
+            {editable ? t('adv.footerEditable') : t('adv.footerReadonly')}
           </span>
           <div className="flex items-center gap-2">
             <button
@@ -619,7 +733,7 @@ export function AdvancedSiteModal() {
               onClick={closeAdvancedDialog}
               className="px-5 py-1 bg-[#1e4b85] hover:bg-[#255da3] text-white font-medium"
             >
-              OK
+              {t('site.ok')}
             </button>
           </div>
         </div>

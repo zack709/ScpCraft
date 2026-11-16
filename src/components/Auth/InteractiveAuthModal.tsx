@@ -1,15 +1,18 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { ChevronDown, ChevronRight, KeyRound, Lock, X } from 'lucide-react';
+import { translate, type TranslationKey } from '../../i18n';
 import { useWorkspaceStore } from '../../stores/useWorkspaceStore';
 
 export function InteractiveAuthModal() {
   const {
     theme,
+    locale,
     authChallenge,
     connectingSession,
     submitAuthChallenge,
     cancelAuthChallenge,
   } = useWorkspaceStore();
+  const t = (key: TranslationKey) => translate(locale, key);
 
   const [responses, setResponses] = useState<string[]>([]);
   const [saveSecret, setSaveSecret] = useState(false);
@@ -60,7 +63,7 @@ export function InteractiveAuthModal() {
             ) : (
               <Lock className="w-4 h-4 text-[#4da3ff] shrink-0" />
             )}
-            <span className="truncate">{authChallenge.title || 'Server Authentication'}</span>
+            <span className="truncate">{authChallenge.title || t('auth.title')}</span>
           </div>
           <button
             type="button"
@@ -89,7 +92,7 @@ export function InteractiveAuthModal() {
                 ) : (
                   <ChevronRight className="w-3.5 h-3.5" />
                 )}
-                Authentication log ({authChallenge.logLines.length})
+                {t('auth.log')} ({authChallenge.logLines.length})
               </button>
               {showLog && (
                 <div
@@ -145,7 +148,7 @@ export function InteractiveAuthModal() {
                 checked={saveSecret}
                 onChange={(e) => setSaveSecret(e.target.checked)}
               />
-              <span>Save {authChallenge.authKind} in OS Keyring</span>
+              <span>{t('auth.saveSecret')}</span>
             </label>
           )}
 
@@ -158,14 +161,14 @@ export function InteractiveAuthModal() {
                 isDark ? 'border-[#454545] hover:bg-[#323233]' : 'border-slate-300 hover:bg-slate-100'
               }`}
             >
-              Cancel
+              {t('site.cancel')}
             </button>
             <button
               type="submit"
               disabled={connectingSession}
               className="px-4 py-1.5 rounded bg-[#1e4b85] hover:bg-[#255da3] text-white text-xs font-medium"
             >
-              {connectingSession ? 'Authenticating...' : 'OK'}
+              {connectingSession ? t('auth.authenticating') : t('site.ok')}
             </button>
           </div>
         </form>

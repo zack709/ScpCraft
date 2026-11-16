@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { translate, type TranslationKey } from '../../i18n';
 import { getTargetPathsForPane, useWorkspaceStore } from '../../stores/useWorkspaceStore';
 import { isMacOS } from '../../utils/platform';
 
 export function FunctionKeyBar() {
   const {
     theme,
+    locale,
     activePane,
     leftPane,
     rightPane,
@@ -14,6 +16,7 @@ export function FunctionKeyBar() {
     runCommandInput,
     openFileInEditor,
   } = useWorkspaceStore();
+  const t = (key: TranslationKey) => translate(locale, key);
 
   const [cmdText, setCmdText] = useState('');
   const isDark = theme === 'dark';
@@ -22,19 +25,19 @@ export function FunctionKeyBar() {
   const hasSelection = getTargetPathsForPane(paneState).length > 0;
 
   const buttons = [
-    { keyLabel: 'F2', label: 'Rename', enabled: hasSelection, onClick: () => openModal('rename', activePane) },
+    { keyLabel: 'F2', label: t('fkey.rename'), enabled: hasSelection, onClick: () => openModal('rename', activePane) },
     {
       keyLabel: 'F4',
-      label: 'Edit',
+      label: t('fkey.edit'),
       enabled: hasSelection,
       onClick: () => void openFileInEditor(activePane),
     },
-    { keyLabel: 'F5', label: 'Copy', enabled: hasSelection, onClick: () => openModal('copy', activePane) },
-    { keyLabel: 'F6', label: 'Move', enabled: hasSelection, onClick: () => openModal('move', activePane) },
-    { keyLabel: 'F7', label: 'New Dir', enabled: true, onClick: () => openModal('mkdir', activePane) },
-    { keyLabel: 'F8', label: 'Delete', enabled: hasSelection, onClick: () => openModal('delete', activePane) },
-    { keyLabel: 'F9', label: 'Properties', enabled: hasSelection, onClick: () => openModal('properties', activePane) },
-    { keyLabel: isMac ? '⌘O' : 'Ctrl+O', label: 'Open Dir', enabled: true, onClick: () => openModal('opendir', activePane) },
+    { keyLabel: 'F5', label: t('fkey.copy'), enabled: hasSelection, onClick: () => openModal('copy', activePane) },
+    { keyLabel: 'F6', label: t('fkey.move'), enabled: hasSelection, onClick: () => openModal('move', activePane) },
+    { keyLabel: 'F7', label: t('fkey.newDir'), enabled: true, onClick: () => openModal('mkdir', activePane) },
+    { keyLabel: 'F8', label: t('fkey.delete'), enabled: hasSelection, onClick: () => openModal('delete', activePane) },
+    { keyLabel: 'F9', label: t('fkey.properties'), enabled: hasSelection, onClick: () => openModal('properties', activePane) },
+    { keyLabel: isMac ? '⌘O' : 'Ctrl+O', label: t('fkey.openDir'), enabled: true, onClick: () => openModal('opendir', activePane) },
   ];
 
   return (
@@ -61,12 +64,12 @@ export function FunctionKeyBar() {
             isDark ? 'border-slate-800 bg-slate-950/70' : 'border-slate-200 bg-white'
           }`}
         >
-          <span className="font-mono text-blue-500 font-semibold shrink-0">Command &gt;</span>
+          <span className="font-mono text-blue-500 font-semibold shrink-0">{t('fkey.cmdLabel')}</span>
           <input
             type="text"
             value={cmdText}
             onChange={(e) => setCmdText(e.target.value)}
-            placeholder="Type `cd <path>` to navigate active pane..."
+            placeholder={t('fkey.cmdPlaceholder')}
             className={`flex-1 px-2 py-0.5 rounded border text-xs font-mono outline-none ${
               isDark
                 ? 'bg-slate-900 border-slate-700 text-slate-100 focus:border-blue-500'

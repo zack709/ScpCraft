@@ -260,6 +260,11 @@ pub async fn sftp_pty_open(
 
     let (mut read_half, write_half) = channel.split();
 
+    if !live.shell.is_empty() {
+        let shell_cmd = format!("{}\r", live.shell);
+        let _ = write_half.data(shell_cmd.as_bytes()).await;
+    }
+
     if let Some(dir) = request.cwd.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
         let cmd = format!("cd {}\r", shell_quote_posix(dir));
         let _ = write_half.data(cmd.as_bytes()).await;

@@ -641,6 +641,19 @@ pub fn local_copy_or_move(
 }
 
 #[tauri::command]
+pub async fn pick_private_key_file() -> Result<Option<String>, String> {
+    let mut dialog = rfd::AsyncFileDialog::new()
+        .set_title("Select Private Key File")
+        .add_filter("SSH Private Keys", &["ppk", "pem", "key", "pub"])
+        .add_filter("All Files", &["*"]);
+    if let Some(ssh_dir) = dirs::home_dir().map(|h| h.join(".ssh")).filter(|p| p.is_dir()) {
+        dialog = dialog.set_directory(ssh_dir);
+    }
+    let picked = dialog.pick_file().await;
+    Ok(picked.map(|f| f.path().to_string_lossy().to_string()))
+}
+
+#[tauri::command]
 pub fn local_get_properties(
     path: String,
     calculate_dir_size: bool,

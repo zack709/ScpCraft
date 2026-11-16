@@ -1,11 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { FolderPlus, X } from 'lucide-react';
+import { translate, type TranslationKey } from '../../i18n';
 import { useWorkspaceStore } from '../../stores/useWorkspaceStore';
 import { PermissionsGrid } from './PermissionsGrid';
 
 export function CreateDirModal() {
   const {
     theme,
+    locale,
     activeModal,
     modalPane,
     rightPaneMode,
@@ -14,6 +16,7 @@ export function CreateDirModal() {
     closeModal,
     createDirectory,
   } = useWorkspaceStore();
+  const t = (key: TranslationKey) => translate(locale, key);
 
   const [dirName, setDirName] = useState('');
   const [setRights, setSetRights] = useState(false);
@@ -76,7 +79,7 @@ export function CreateDirModal() {
         >
           <div className="flex items-center gap-2">
             <FolderPlus className="w-4 h-4 text-[#4da3ff]" />
-            <span>Create Directory</span>
+            <span>{t('mkdir.title')}</span>
           </div>
           <button
             type="button"
@@ -95,7 +98,7 @@ export function CreateDirModal() {
           )}
 
           <div>
-            <label className="block mb-1 font-medium">New folder name:</label>
+            <label className="block mb-1 font-medium">{t('mkdir.label')}</label>
             <input
               autoFocus
               type="text"
@@ -110,7 +113,7 @@ export function CreateDirModal() {
               }`}
             />
             <div className="mt-1 text-[10px] opacity-65 font-mono truncate">
-              In: {pane.currentPath}
+              {t('mkdir.inPath')} {pane.currentPath}
             </div>
           </div>
 
@@ -122,7 +125,7 @@ export function CreateDirModal() {
                   checked={setRights}
                   onChange={(e) => setSetRights(e.target.checked)}
                 />
-                <span>Set permissions</span>
+                <span>{t('mkdir.setPerms')}</span>
               </label>
 
               {setRights && (
@@ -143,14 +146,14 @@ export function CreateDirModal() {
                 isDark ? 'border-[#454545] hover:bg-[#323233]' : 'border-slate-300 hover:bg-slate-100'
               }`}
             >
-              Cancel
+              {t('site.cancel')}
             </button>
             <button
               type="submit"
               disabled={busy}
               className="px-4 py-1.5 rounded bg-[#1e4b85] hover:bg-[#255da3] text-white text-xs font-medium"
             >
-              {busy ? 'Creating...' : 'OK'}
+              {busy ? t('mkdir.creating') : t('site.ok')}
             </button>
           </div>
         </form>

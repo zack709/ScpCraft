@@ -23,12 +23,14 @@ import { usePaneNavigation } from './hooks/usePaneNavigation';
 import { DragDropOverlay, useDragDropTransfer } from './hooks/useDragDropTransfer';
 import { useSiteStore } from './stores/useSiteStore';
 import { useWorkspaceStore } from './stores/useWorkspaceStore';
+import { translate } from './i18n';
 import { isMacOS } from './utils/platform';
 import './App.css';
 
 export function App() {
   const {
     theme,
+    locale,
     interfaceMode,
     splitRatio,
     setSplitRatio,
@@ -107,7 +109,7 @@ export function App() {
         {interfaceMode === 'commander' ? (
           <>
             <div style={{ width: `${splitRatio * 100}%` }} className="h-full min-w-[185px]">
-              <FilePane paneId="left" title="Local" />
+              <FilePane paneId="left" title={translate(locale, 'pane.local')} />
             </div>
 
             {/* Draggable Splitter (double click resets 50/50 like WinSCP TSplitter) */}
@@ -131,12 +133,12 @@ export function App() {
             />
 
             <div style={{ width: `${(1 - splitRatio) * 100}%` }} className="h-full min-w-[185px]">
-              <FilePane paneId="right" title="Target" />
+              <FilePane paneId="right" title={translate(locale, 'pane.target')} />
             </div>
           </>
         ) : (
           <div className="w-full h-full">
-            <FilePane paneId="left" title="Explorer" />
+            <FilePane paneId="left" title={translate(locale, 'pane.explorer')} />
           </div>
         )}
       </main>

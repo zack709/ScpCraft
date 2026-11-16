@@ -35,6 +35,7 @@ import {
   Trash2,
   Unplug,
 } from 'lucide-react';
+import { translate, type TranslationKey } from '../../i18n';
 import {
   getTargetPathsForPane,
   useWorkspaceStore,
@@ -77,6 +78,7 @@ const REMOTE_QUICK_PATHS = [
 export function FilePane({ paneId, title }: FilePaneProps) {
   const {
     theme,
+    locale,
     activePane,
     rightPaneMode,
     setRightPaneMode,
@@ -111,6 +113,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
     openModal,
     openFileInEditor,
   } = useWorkspaceStore();
+  const t = (key: TranslationKey) => translate(locale, key);
 
   const pane = paneId === 'left' ? leftPane : rightPane;
   const isActive = activePane === paneId;
@@ -263,7 +266,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
               {connectingSession && (
                 <div className="flex items-center justify-center gap-1.5 pt-2 text-[#4da3ff] font-medium">
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Connecting to {connectedSite.protocol.toUpperCase()} server...</span>
+                  <span>{t('pane.connectingTo')} {connectedSite.protocol.toUpperCase()} {t('pane.server')}</span>
                 </div>
               )}
               {connectionError && (
@@ -280,7 +283,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
               )}
               {!connectingSession && !connectionError && (
                 <p className="opacity-80 pt-1">
-                  {`Site profile ready. Click "Connect ${connectedSite.protocol.toUpperCase()} Now" below to authenticate and browse remote directories.`}
+                  {t('pane.profileReady')}
                 </p>
               )}
             </div>
@@ -290,8 +293,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
                 isDark ? 'text-[#a0a0a0]' : 'text-slate-500'
               }`}
             >
-              Open the Site Manager to pick or import saved sessions, or switch this panel to Local
-              Browser Mode for dual-pane F5 Copy / F6 Move right now.
+              {t('pane.placeholderDesc')}
             </p>
           )}
           <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -309,7 +311,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
                 ) : (
                   <Plug className="w-3.5 h-3.5" />
                 )}
-                Connect {connectedSite.protocol.toUpperCase()} Now
+                {t('pane.connectNow')} ({connectedSite.protocol.toUpperCase()})
               </button>
             )}
             <button
@@ -318,7 +320,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
               className="px-3 py-1.5 bg-[#10b981] hover:bg-[#059669] text-white text-xs font-medium inline-flex items-center gap-1.5"
             >
               <Server className="w-3.5 h-3.5" />
-              Open Site Manager
+              {t('pane.openSiteManager')}
             </button>
             <button
               type="button"
@@ -326,7 +328,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
               className="px-3 py-1.5 bg-[#1e4b85] hover:bg-[#255da3] text-white text-xs font-medium inline-flex items-center gap-1.5"
             >
               <HardDrive className="w-3.5 h-3.5" />
-              Switch to Local Browser Mode
+              {t('pane.switchLocalMode')}
             </button>
           </div>
         </div>
@@ -460,8 +462,8 @@ export function FilePane({ paneId, title }: FilePaneProps) {
           }`}
         >
           {isRemoteSftp
-            ? connectedSite?.protocol.toUpperCase() || 'REMOTE'
-            : title ?? (paneId === 'left' ? 'Local' : 'Local 2')}
+            ? connectedSite?.protocol.toUpperCase() || t('pane.remote')
+            : title ?? (paneId === 'left' ? t('pane.local') : t('pane.local2'))}
         </span>
         {isRemoteSftp && connectedSite && (
           <span
@@ -498,7 +500,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
             }`}
           >
             <option value="" disabled>
-              Remote Places
+              {t('pane.remotePlaces')}
             </option>
             {REMOTE_QUICK_PATHS.map((qp) => (
               <option key={qp.path} value={qp.path}>
@@ -527,7 +529,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
             }`}
           >
             <option value="" disabled>
-              Drives / Places
+              {t('pane.drivesPlaces')}
             </option>
             {drives.map((d) => (
               <option key={`${d.kind}-${d.path}`} value={d.path}>
@@ -543,7 +545,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
               type="button"
               onClick={() => openModal('bookmarks', 'right')}
               className={iconBtnCls(false)}
-              title="Location Profiles / Bookmarks (Ctrl+B)"
+              title={t('pane.bookmarksTip')}
             >
               <Bookmark className="w-3.5 h-3.5 text-amber-400" />
             </button>
@@ -551,7 +553,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
               type="button"
               onClick={() => void disconnectActiveSession()}
               className={iconBtnCls(false)}
-              title="Disconnect SFTP Session"
+              title={t('pane.disconnectTip')}
             >
               <Unplug className="w-3.5 h-3.5 text-red-400" />
             </button>
@@ -562,7 +564,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
           type="button"
           onClick={() => openModal('opendir', paneId)}
           className={iconBtnCls(false)}
-          title="Open Directory (Ctrl+O)"
+          title={t('pane.openDirTip')}
         >
           <FolderUp className="w-3.5 h-3.5 text-[#4da3ff]" />
         </button>
@@ -661,37 +663,37 @@ export function FilePane({ paneId, title }: FilePaneProps) {
             disabled={!hasTargets}
             onClick={() => openModal('copy', paneId)}
             className={labeledActionCls(!hasTargets)}
-            title="Copy (F5)"
+            title={`${t('pane.copy')} (F5)`}
           >
             <Copy className="w-3.5 h-3.5 text-[#4da3ff]" />
-            Copy
+            {t('pane.copy')}
           </button>
           <button
             type="button"
             disabled={!hasTargets}
             onClick={() => openModal('move', paneId)}
             className={labeledActionCls(!hasTargets)}
-            title="Move (F6)"
+            title={`${t('pane.move')} (F6)`}
           >
             <MoveRight className="w-3.5 h-3.5 text-emerald-400" />
-            Move
+            {t('pane.move')}
           </button>
           <button
             type="button"
             disabled={!hasTargets}
             onClick={() => void openFileInEditor(paneId)}
             className={labeledActionCls(!hasTargets)}
-            title="Edit (F4)"
+            title={`${t('pane.edit')} (F4)`}
           >
             <FileEdit className="w-3.5 h-3.5 text-amber-300" />
-            Edit
+            {t('pane.edit')}
           </button>
           <button
             type="button"
             disabled={!hasTargets}
             onClick={() => openModal('delete', paneId)}
             className={iconBtnCls(!hasTargets)}
-            title="Delete (F8)"
+            title={`${t('pane.ctxDelete')} (F8)`}
           >
             <Trash2 className="w-3.5 h-3.5 text-red-400" />
           </button>
@@ -700,7 +702,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
             disabled={!hasTargets}
             onClick={() => openModal('rename', paneId)}
             className={iconBtnCls(!hasTargets)}
-            title="Rename (F2)"
+            title={`${t('pane.ctxRename')} (F2)`}
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>
@@ -709,10 +711,10 @@ export function FilePane({ paneId, title }: FilePaneProps) {
             disabled={!hasTargets}
             onClick={() => openModal('properties', paneId)}
             className={labeledActionCls(!hasTargets)}
-            title="Properties (F9)"
+            title={`${t('pane.properties')} (F9)`}
           >
             <Info className="w-3.5 h-3.5 text-sky-400" />
-            Properties
+            {t('pane.properties')}
           </button>
 
           <div className="relative" ref={newMenuRef}>
@@ -723,10 +725,10 @@ export function FilePane({ paneId, title }: FilePaneProps) {
                 setNewMenuOpen((prev) => !prev);
               }}
               className={labeledActionCls(false)}
-              title="New Directory (F7) / New File (Shift+F4)"
+              title={`${t('pane.ctxNewDir')} (F7) / ${t('pane.ctxNewFile')} (Shift+F4)`}
             >
               <FolderPlus className="w-3.5 h-3.5 text-amber-400" />
-              New
+              {t('pane.new')}
               <ChevronDown className="w-3 h-3 opacity-75" />
             </button>
             {newMenuOpen && (
@@ -749,7 +751,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
                 >
                   <span className="flex items-center gap-1.5">
                     <FolderPlus className="w-3.5 h-3.5 text-amber-400" />
-                    Directory
+                    {t('pane.directory')}
                   </span>
                   <span className="text-[10px] opacity-70">F7</span>
                 </button>
@@ -765,7 +767,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
                 >
                   <span className="flex items-center gap-1.5">
                     <FilePlus className="w-3.5 h-3.5 text-sky-400" />
-                    File
+                    {t('pane.file')}
                   </span>
                   <span className="text-[10px] opacity-70">Shift+F4</span>
                 </button>
@@ -782,7 +784,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
                   >
                     <span className="flex items-center gap-1.5">
                       <Link2 className="w-3.5 h-3.5 text-purple-400" />
-                      Link / Symlink
+                      {t('pane.symlink')}
                     </span>
                     <span className="text-[10px] opacity-70">SFTP</span>
                   </button>
@@ -1035,42 +1037,42 @@ export function FilePane({ paneId, title }: FilePaneProps) {
               onClick={() => setSort(paneId, 'name')}
               className={`h-full px-1.5 text-left truncate hover:text-[#4da3ff] ${colDividerCls}`}
             >
-              Name{renderSortIcon('name')}
+              {t('pane.colName')}{renderSortIcon('name')}
             </button>
             <button
               type="button"
               onClick={() => setSort(paneId, 'size')}
               className={`h-full px-1.5 text-right truncate hover:text-[#4da3ff] ${colDividerCls}`}
             >
-              Size{renderSortIcon('size')}
+              {t('pane.colSize')}{renderSortIcon('size')}
             </button>
             <button
               type="button"
               onClick={() => setSort(paneId, 'type')}
               className={`h-full px-1.5 text-left truncate hover:text-[#4da3ff] ${colDividerCls}`}
             >
-              Type{renderSortIcon('type')}
+              {t('pane.colType')}{renderSortIcon('type')}
             </button>
             <button
               type="button"
               onClick={() => setSort(paneId, 'modified')}
               className={`h-full px-1.5 text-left truncate hover:text-[#4da3ff] ${colDividerCls}`}
             >
-              Date modified{renderSortIcon('modified')}
+              {t('pane.colModified')}{renderSortIcon('modified')}
             </button>
             <button
               type="button"
               onClick={() => setSort(paneId, 'ext')}
               className={`h-full px-1.5 text-left truncate hover:text-[#4da3ff] ${colDividerCls}`}
             >
-              Ext{renderSortIcon('ext')}
+              {t('pane.colExt')}{renderSortIcon('ext')}
             </button>
             <button
               type="button"
               onClick={() => setSort(paneId, 'attr')}
               className="h-full px-1.5 text-left truncate hover:text-[#4da3ff]"
             >
-              Attr{renderSortIcon('attr')}
+              {t('pane.colAttr')}{renderSortIcon('attr')}
             </button>
           </div>
 
@@ -1095,7 +1097,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
               <div className="h-full w-full flex flex-col items-center justify-center gap-3 select-none">
                 <Loader2 className="w-7 h-7 animate-spin text-[#4da3ff]" />
                 <span className={`text-xs ${isDark ? 'text-[#a1a1a6]' : 'text-slate-500'}`}>
-                  Loading directory...
+                  {t('pane.loadingDir')}
                 </span>
                 <button
                   type="button"
@@ -1110,7 +1112,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
                       : 'bg-[#e1e1e1] border-[#adadad] text-[#1e1e1e] hover:bg-[#e5f1fb]'
                   }`}
                 >
-                  Cancel
+                  {t('site.cancel')}
                 </button>
               </div>
             ) : (
@@ -1159,7 +1161,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
                           isDark ? 'text-[#9e9e9e]' : 'text-[#555555]'
                         } ${colDividerCls}`}
                       >
-                        Parent directory
+                        {t('pane.parentDirRow')}
                       </span>
                       <span className={`h-full px-1.5 ${colDividerCls}`} />
                       <span className={`h-full px-1.5 ${colDividerCls}`} />
@@ -1331,9 +1333,9 @@ export function FilePane({ paneId, title }: FilePaneProps) {
             className={`hover:underline ${
               pane.showHidden ? 'text-[#4da3ff] font-medium' : ''
             }`}
-            title="Click to toggle hidden files (Ctrl+Alt+H)"
+            title="Ctrl+Alt+H"
           >
-            Hidden: {pane.hiddenCount} {pane.showHidden ? '(Shown)' : ''}
+            {t('pane.hiddenCount')} {pane.hiddenCount} {pane.showHidden ? t('pane.shown') : ''}
           </button>
           <button
             type="button"
@@ -1341,9 +1343,9 @@ export function FilePane({ paneId, title }: FilePaneProps) {
             className={`hover:underline ${
               pane.filterMask !== '*' ? 'text-amber-400 font-medium' : ''
             }`}
-            title="Click to change file filter mask (Ctrl+F)"
+            title="Ctrl+F"
           >
-            Filter: {pane.filterMask}
+            {t('pane.filterLabel')} {pane.filterMask}
           </button>
         </div>
       </div>
@@ -1367,7 +1369,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
                   isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
                 }`}
               >
-                <span>Copy to Opposite Pane</span>
+                <span>{t('pane.ctxCopy')}</span>
                 <span className="opacity-70">F5</span>
               </button>
               <button
@@ -1377,7 +1379,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
                   isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
                 }`}
               >
-                <span>Move to Opposite Pane</span>
+                <span>{t('pane.ctxMove')}</span>
                 <span className="opacity-70">F6</span>
               </button>
               <button
@@ -1387,7 +1389,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
                   isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
                 }`}
               >
-                <span>Edit</span>
+                <span>{t('pane.edit')}</span>
                 <span className="opacity-70">F4</span>
               </button>
               <button
@@ -1397,7 +1399,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
                   isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
                 }`}
               >
-                <span>Rename</span>
+                <span>{t('pane.ctxRename')}</span>
                 <span className="opacity-70">F2</span>
               </button>
               <button
@@ -1407,7 +1409,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
                   isDark ? 'hover:bg-red-500/20' : 'hover:bg-red-50'
                 }`}
               >
-                <span>Delete</span>
+                <span>{t('pane.ctxDelete')}</span>
                 <span className="opacity-70">F8</span>
               </button>
               <button
@@ -1417,7 +1419,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
                   isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
                 }`}
               >
-                <span>Properties</span>
+                <span>{t('pane.properties')}</span>
                 <span className="opacity-70">F9</span>
               </button>
               <div
@@ -1434,7 +1436,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
               isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
             }`}
           >
-            <span>New Directory</span>
+            <span>{t('pane.ctxNewDir')}</span>
             <span className="opacity-70">F7</span>
           </button>
           <button
@@ -1444,7 +1446,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
               isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
             }`}
           >
-            <span>New File</span>
+            <span>{t('pane.ctxNewFile')}</span>
             <span className="opacity-70">Shift+F4</span>
           </button>
           {isRemoteSftp && (
@@ -1455,7 +1457,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
                 isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
               }`}
             >
-              <span>New Link / Symlink...</span>
+              <span>{t('pane.ctxSymlink')}</span>
               <span className="opacity-70">SFTP</span>
             </button>
           )}
@@ -1466,7 +1468,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
               isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
             }`}
           >
-            <span>Location Bookmarks...</span>
+            <span>{t('pane.ctxBookmarks')}</span>
             <span className="opacity-70">Ctrl+B</span>
           </button>
           <div
@@ -1481,7 +1483,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
               isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
             }`}
           >
-            <span>Select All</span>
+            <span>{t('pane.ctxSelectAll')}</span>
             <span className="opacity-70">Ctrl+A</span>
           </button>
           <button
@@ -1491,7 +1493,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
               isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
             }`}
           >
-            Clear Selection
+            {t('pane.ctxClearSel')}
           </button>
           <button
             type="button"
@@ -1500,7 +1502,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
               isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
             }`}
           >
-            <span>Refresh</span>
+            <span>{t('pane.ctxRefresh')}</span>
             <span className="opacity-70">Ctrl+R</span>
           </button>
         </div>

@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { AlertTriangle, FileClock, X } from 'lucide-react';
+import { translate, type TranslationKey } from '../../i18n';
 import { transferApi, type ConflictResolution } from '../../services/transferApi';
 import { useWorkspaceStore } from '../../stores/useWorkspaceStore';
 import { formatBytes, formatDateTime } from '../../utils/formatters';
 
 export function OverwriteModal() {
-  const { theme, transferSnapshot } = useWorkspaceStore();
+  const { theme, locale, transferSnapshot } = useWorkspaceStore();
+  const t = (key: TranslationKey) => translate(locale, key);
   const [busy, setBusy] = useState(false);
 
   const conflict = transferSnapshot?.activeConflict ?? null;
@@ -54,7 +56,7 @@ export function OverwriteModal() {
         >
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-400" />
-            <span>Confirm File Overwrite / Resume</span>
+            <span>{t('overwrite.title')}</span>
           </div>
           <button
             type="button"
@@ -70,7 +72,7 @@ export function OverwriteModal() {
         <div className="p-4 space-y-3">
           <div className="space-y-1">
             <div className="font-medium">
-              Target file already exists{conflict.hasFilepart ? ' (.filepart found)' : ''}:
+              {t('overwrite.exists')}{conflict.hasFilepart ? t('overwrite.filepartFound') : ''}：
             </div>
             <div className="font-mono text-[11px] text-[#4da3ff] break-all">
               {conflict.targetPath}
@@ -103,15 +105,15 @@ export function OverwriteModal() {
                 isDark ? 'bg-[#1e1e1e] border-[#3c3c3c]' : 'bg-slate-50 border-slate-200'
               }`}
             >
-              <div className="font-semibold text-emerald-400">Source File</div>
+              <div className="font-semibold text-emerald-400">{t('overwrite.sourceFile')}</div>
               <div className="font-mono truncate" title={conflict.sourcePath}>
                 {conflict.fileName}
               </div>
               <div>
-                Size: <strong>{formatBytes(conflict.sourceSize)}</strong>
+                {t('overwrite.size')} <strong>{formatBytes(conflict.sourceSize)}</strong>
               </div>
               <div className="opacity-75">
-                Modified: {formatDateTime(conflict.sourceMtimeMs)}
+                {t('overwrite.modified')} {formatDateTime(conflict.sourceMtimeMs)}
               </div>
             </div>
 
@@ -120,15 +122,15 @@ export function OverwriteModal() {
                 isDark ? 'bg-[#1e1e1e] border-[#3c3c3c]' : 'bg-slate-50 border-slate-200'
               }`}
             >
-              <div className="font-semibold text-amber-400">Existing Target</div>
+              <div className="font-semibold text-amber-400">{t('overwrite.targetFile')}</div>
               <div className="font-mono truncate" title={conflict.targetPath}>
                 {conflict.fileName}
               </div>
               <div>
-                Size: <strong>{formatBytes(conflict.targetSize)}</strong>
+                {t('overwrite.size')} <strong>{formatBytes(conflict.targetSize)}</strong>
               </div>
               <div className="opacity-75">
-                Modified: {formatDateTime(conflict.targetMtimeMs)}
+                {t('overwrite.modified')} {formatDateTime(conflict.targetMtimeMs)}
               </div>
             </div>
           </div>
@@ -141,7 +143,7 @@ export function OverwriteModal() {
                 onClick={() => void handleResolve('resume')}
                 className="px-2.5 py-1.5 rounded bg-[#10b981] hover:bg-[#059669] text-white text-xs font-medium"
               >
-                Resume
+                {t('overwrite.resume')}
               </button>
             )}
             <button
@@ -150,7 +152,7 @@ export function OverwriteModal() {
               onClick={() => void handleResolve('overwrite')}
               className="px-2.5 py-1.5 rounded bg-[#1e4b85] hover:bg-[#255da3] text-white text-xs font-medium"
             >
-              Overwrite
+              {t('overwrite.overwrite')}
             </button>
             <button
               type="button"
@@ -158,7 +160,7 @@ export function OverwriteModal() {
               onClick={() => void handleResolve('overwrite_all')}
               className={btnCls}
             >
-              Yes to All
+              {t('overwrite.yesAll')}
             </button>
             {canResume && (
               <button
@@ -167,7 +169,7 @@ export function OverwriteModal() {
                 onClick={() => void handleResolve('resume_all')}
                 className={btnCls}
               >
-                Resume All
+                {t('overwrite.resumeAll')}
               </button>
             )}
             <button
@@ -176,7 +178,7 @@ export function OverwriteModal() {
               onClick={() => void handleResolve('rename')}
               className={btnCls}
             >
-              Auto-Rename
+              {t('overwrite.autoRename')}
             </button>
             <button
               type="button"
@@ -184,7 +186,7 @@ export function OverwriteModal() {
               onClick={() => void handleResolve('rename_all')}
               className={btnCls}
             >
-              Rename All
+              {t('overwrite.renameAll')}
             </button>
             <button
               type="button"
@@ -192,7 +194,7 @@ export function OverwriteModal() {
               onClick={() => void handleResolve('newer_only')}
               className={btnCls}
             >
-              Newer Only
+              {t('overwrite.newerOnly')}
             </button>
             <button
               type="button"
@@ -200,7 +202,7 @@ export function OverwriteModal() {
               onClick={() => void handleResolve('skip')}
               className={btnCls}
             >
-              Skip (No)
+              {t('overwrite.skip')}
             </button>
             <button
               type="button"
@@ -208,7 +210,7 @@ export function OverwriteModal() {
               onClick={() => void handleResolve('skip_all')}
               className={btnCls}
             >
-              Skip All
+              {t('overwrite.skipAll')}
             </button>
             <button
               type="button"
@@ -216,7 +218,7 @@ export function OverwriteModal() {
               onClick={() => void handleResolve('cancel')}
               className="px-2.5 py-1.5 rounded bg-red-600/80 hover:bg-red-600 text-white text-xs font-medium"
             >
-              Cancel
+              {t('site.cancel')}
             </button>
           </div>
         </div>

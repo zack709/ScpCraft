@@ -10,6 +10,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
+import { translate, type TranslationKey } from '../../i18n';
 import { transferApi, type TransferItem } from '../../services/transferApi';
 import { useWorkspaceStore } from '../../stores/useWorkspaceStore';
 import {
@@ -42,12 +43,14 @@ function statusColorClass(status: TransferItem['status']): string {
 export function TransferQueueDock() {
   const {
     theme,
+    locale,
     showQueueDock,
     queueHeight,
     queueItems,
     transferSnapshot,
     clearQueueLogs,
   } = useWorkspaceStore();
+  const t = (key: TranslationKey) => translate(locale, key);
 
   const [dockTab, setDockTab] = useState<'queue' | 'log'>('queue');
 
@@ -108,18 +111,18 @@ export function TransferQueueDock() {
             onClick={() => setDockTab('queue')}
             className={tabBtnCls(dockTab === 'queue')}
           >
-            Transfer Queue ({xferItems.length})
+            {t('queue.tabQueue')} ({xferItems.length})
           </button>
           <button
             type="button"
             onClick={() => setDockTab('log')}
             className={tabBtnCls(dockTab === 'log')}
           >
-            Activity Log ({queueItems.length})
+            {t('queue.tabLog')} ({queueItems.length})
           </button>
           {totalSpeedBps > 0 && (
             <span className="ml-2 font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#1e4b85]/50 text-[#4da3ff]">
-              {formatSpeedBps(totalSpeedBps)} • {activeCount} active
+              {formatSpeedBps(totalSpeedBps)} • {activeCount} {t('queue.active')}
             </span>
           )}
         </div>
@@ -127,7 +130,7 @@ export function TransferQueueDock() {
         <div className="flex items-center gap-1.5">
           {dockTab === 'queue' ? (
             <>
-              <label className="text-[10px] opacity-75">Workers:</label>
+              <label className="text-[10px] opacity-75">{t('queue.workers')}</label>
               <select
                 aria-label="Max concurrent transfers"
                 value={maxConcurrent}
@@ -147,7 +150,7 @@ export function TransferQueueDock() {
                 ))}
               </select>
 
-              <label className="text-[10px] opacity-75 ml-1">Limit:</label>
+              <label className="text-[10px] opacity-75 ml-1">{t('queue.limit')}</label>
               <select
                 aria-label="Global speed limit KB/s"
                 value={globalLimit}
@@ -160,7 +163,7 @@ export function TransferQueueDock() {
                     : 'bg-white border-slate-300 text-slate-800'
                 }`}
               >
-                <option value={0}>Unlimited</option>
+                <option value={0}>{t('queue.unlimited')}</option>
                 <option value={1024}>1024 KB/s</option>
                 <option value={512}>512 KB/s</option>
                 <option value={256}>256 KB/s</option>
@@ -174,37 +177,37 @@ export function TransferQueueDock() {
                     type="button"
                     onClick={() => void transferApi.controlAll('pause_all')}
                     className={smallBtnCls}
-                    title="Pause All"
+                    title={t('queue.pause')}
                   >
                     <Pause className="w-3 h-3 text-amber-400" />
-                    Pause
+                    {t('queue.pause')}
                   </button>
                   <button
                     type="button"
                     onClick={() => void transferApi.controlAll('resume_all')}
                     className={smallBtnCls}
-                    title="Resume All"
+                    title={t('queue.resume')}
                   >
                     <Play className="w-3 h-3 text-emerald-400" />
-                    Resume
+                    {t('queue.resume')}
                   </button>
                   <button
                     type="button"
                     onClick={() => void transferApi.controlAll('cancel_all')}
                     className={smallBtnCls}
-                    title="Cancel Active"
+                    title={t('queue.cancel')}
                   >
                     <Square className="w-3 h-3 text-red-400" />
-                    Cancel
+                    {t('queue.cancel')}
                   </button>
                   <button
                     type="button"
                     onClick={() => void transferApi.controlAll('clear_finished')}
                     className={smallBtnCls}
-                    title="Clear Completed / Failed / Cancelled"
+                    title={t('queue.clearDone')}
                   >
                     <Trash2 className="w-3 h-3" />
-                    Clear Done
+                    {t('queue.clearDone')}
                   </button>
                 </>
               )}
@@ -217,7 +220,7 @@ export function TransferQueueDock() {
                 className={smallBtnCls}
               >
                 <Trash2 className="w-3 h-3" />
-                Clear
+                {t('queue.clear')}
               </button>
             )
           )}
@@ -233,7 +236,7 @@ export function TransferQueueDock() {
                 isDark ? 'text-[#777777]' : 'text-slate-400'
               }`}
             >
-              Transfer queue is empty. Drag files across panes or press F5 / F6 to queue uploads &amp; downloads.
+              {t('queue.empty')}
             </div>
           ) : (
             <table className="w-full border-collapse text-left">
@@ -243,12 +246,12 @@ export function TransferQueueDock() {
                 }`}
               >
                 <tr>
-                  <th className="py-1 px-2 font-medium w-24">Status</th>
-                  <th className="py-1 px-2 font-medium w-44">File</th>
-                  <th className="py-1 px-2 font-medium">Target</th>
-                  <th className="py-1 px-2 font-medium w-48">Progress</th>
-                  <th className="py-1 px-2 font-medium w-32">Speed / ETA</th>
-                  <th className="py-1 px-2 font-medium w-24 text-right">Actions</th>
+                  <th className="py-1 px-2 font-medium w-24">{t('queue.colStatus')}</th>
+                  <th className="py-1 px-2 font-medium w-44">{t('queue.colFile')}</th>
+                  <th className="py-1 px-2 font-medium">{t('queue.colTarget')}</th>
+                  <th className="py-1 px-2 font-medium w-48">{t('queue.colProgress')}</th>
+                  <th className="py-1 px-2 font-medium w-32">{t('queue.colSpeed')}</th>
+                  <th className="py-1 px-2 font-medium w-24 text-right">{t('queue.colActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -406,7 +409,7 @@ export function TransferQueueDock() {
               isDark ? 'text-[#777777]' : 'text-slate-400'
             }`}
           >
-            No activity logs yet. Press F5 to copy or F6 to move selected files between panes.
+            {t('queue.emptyLog')}
           </div>
         ) : (
           <table className="w-full border-collapse text-left">
@@ -416,11 +419,11 @@ export function TransferQueueDock() {
               }`}
             >
               <tr>
-                <th className="py-1 px-2 font-medium w-20">Op</th>
-                <th className="py-1 px-2 font-medium">Source</th>
-                <th className="py-1 px-2 font-medium">Target</th>
-                <th className="py-1 px-2 font-medium">Detail</th>
-                <th className="py-1 px-2 font-medium w-36">Time</th>
+                <th className="py-1 px-2 font-medium w-20">{t('queue.logOp')}</th>
+                <th className="py-1 px-2 font-medium">{t('queue.logSource')}</th>
+                <th className="py-1 px-2 font-medium">{t('queue.logTarget')}</th>
+                <th className="py-1 px-2 font-medium">{t('queue.logDetail')}</th>
+                <th className="py-1 px-2 font-medium w-36">{t('queue.logTime')}</th>
               </tr>
             </thead>
             <tbody>

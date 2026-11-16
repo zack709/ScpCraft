@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { AlertTriangle, Check, Copy, ShieldAlert, ShieldCheck, X } from 'lucide-react';
+import { translate, type TranslationKey } from '../../i18n';
 import { useWorkspaceStore } from '../../stores/useWorkspaceStore';
 
 export function HostKeyModal() {
   const {
     theme,
+    locale,
     hostKeyPrompt,
     connectingSession,
     trustAndReconnectHostKey,
     cancelHostKeyPrompt,
   } = useWorkspaceStore();
+  const t = (key: TranslationKey) => translate(locale, key);
   const [copied, setCopied] = useState(false);
 
   if (!hostKeyPrompt) return null;
@@ -52,9 +55,7 @@ export function HostKeyModal() {
               <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
             )}
             <span>
-              {isMismatch
-                ? 'WARNING - POTENTIAL SECURITY BREACH! Host Key Changed'
-                : 'Unknown Server Host Key'}
+              {isMismatch ? t('hostkey.mismatchTitle') : t('hostkey.unknownTitle')}
             </span>
           </div>
           <button
@@ -70,20 +71,16 @@ export function HostKeyModal() {
         <div className="p-4 space-y-3 text-xs">
           {isMismatch ? (
             <div className="p-2.5 rounded border border-red-500/40 bg-red-500/15 text-[11px] leading-relaxed">
-              The host key cached for{' '}
+              {t('hostkey.mismatchDesc')}{' '}
               <span className="font-mono font-semibold">
                 {hostKeyPrompt.host}:{hostKeyPrompt.port}
-              </span>{' '}
-              does not match the key presented by the server
-              {hostKeyPrompt.mismatchLine ? ` (known_hosts line ${hostKeyPrompt.mismatchLine})` : ''}.
-              Either the server administrator regenerated the host key or an attacker is intercepting
-              the connection.
+              </span>
+              {hostKeyPrompt.mismatchLine ? ` (known_hosts #${hostKeyPrompt.mismatchLine})` : ''}
             </div>
           ) : (
             <p className="text-[11px] leading-relaxed opacity-90">
-              The server&apos;s {hostKeyPrompt.keyAlgorithm} host key is not cached in{' '}
-              <span className="font-mono">{hostKeyPrompt.knownHostsPath}</span>. Verify the
-              fingerprint below matches your administrator&apos;s record before continuing.
+              {t('hostkey.unknownDesc')}{' '}
+              <span className="font-mono">({hostKeyPrompt.keyAlgorithm}) {hostKeyPrompt.knownHostsPath}</span>
             </p>
           )}
 
@@ -93,14 +90,14 @@ export function HostKeyModal() {
             }`}
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="font-sans opacity-70">Target Host:</span>
+              <span className="font-sans opacity-70">{t('hostkey.targetHost')}</span>
               <span className="font-semibold">
                 {hostKeyPrompt.host}:{hostKeyPrompt.port}
                 {hostKeyPrompt.isTunnel ? ' (Jump Host)' : ''}
               </span>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <span className="font-sans opacity-70">Key Algorithm:</span>
+              <span className="font-sans opacity-70">{t('hostkey.algorithm')}</span>
               <span>{hostKeyPrompt.keyAlgorithm}</span>
             </div>
             <div>
@@ -126,7 +123,7 @@ export function HostKeyModal() {
               }`}
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? 'Copied Public Key' : 'Copy OpenSSH Key'}
+              {copied ? t('hostkey.copiedKey') : t('hostkey.copyKey')}
             </button>
           </div>
 
@@ -139,7 +136,7 @@ export function HostKeyModal() {
                 isDark ? 'border-[#454545] hover:bg-[#323233]' : 'border-slate-300 hover:bg-slate-100'
               }`}
             >
-              Cancel
+              {t('site.cancel')}
             </button>
             <button
               type="button"
@@ -151,7 +148,7 @@ export function HostKeyModal() {
                   : 'border-amber-400 bg-amber-50 hover:bg-amber-100 text-amber-900'
               }`}
             >
-              Accept Once
+              {t('hostkey.acceptOnce')}
             </button>
             <button
               type="button"
@@ -161,10 +158,10 @@ export function HostKeyModal() {
             >
               <ShieldCheck className="w-3.5 h-3.5" />
               {connectingSession
-                ? 'Connecting...'
+                ? t('hostkey.connecting')
                 : isMismatch
-                ? 'Update known_hosts'
-                : 'Accept & Save'}
+                ? t('hostkey.updateKnown')
+                : t('hostkey.acceptSave')}
             </button>
           </div>
         </div>
