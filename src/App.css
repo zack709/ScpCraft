@@ -11,39 +11,38 @@
     overflow: hidden;
     user-select: none;
     font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Microsoft JhengHei UI", system-ui, sans-serif;
-    font-size: 13px;
+    font-size: 15px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
 
-  /* macOS native typography & comfortable HiDPI scaling */
+  /* macOS native font family */
   html[data-platform="macos"],
   html[data-platform="macos"] body,
   html[data-platform="macos"] #root {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Helvetica Neue", sans-serif;
-    font-size: 15px;
   }
 }
 
-/* Bump dense WinSCP micro-typography to comfortable macOS sizes */
-html[data-platform="macos"] .text-\[10px\] {
+/* Bump dense micro-typography to comfortable sizes across all platforms */
+.text-\[10px\] {
   font-size: 12px;
   line-height: 1.35;
 }
 
-html[data-platform="macos"] .text-\[11px\] {
+.text-\[11px\] {
   font-size: 13px;
   line-height: 1.4;
 }
 
-html[data-platform="macos"] .text-\[12px\],
-html[data-platform="macos"] .text-xs {
+.text-\[12px\],
+.text-xs {
   font-size: 13.5px;
   line-height: 1.45;
 }
 
-html[data-platform="macos"] .text-sm {
+.text-sm {
   font-size: 15px;
   line-height: 1.45;
 }

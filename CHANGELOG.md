@@ -5,10 +5,13 @@ All notable changes to **ScpCraft** will be documented in this file.
 ## [0.1.8] - 2026-11-16
 
 ### Added
-- **Windows Portable Build & Local `config/` Directory**:
+- **Windows & Linux Portable Builds with Local `config/` Directory**:
   - Added a `portable` Cargo feature (`src-tauri/Cargo.toml`) and centralized config directory resolution (`app_config_dir` in `src-tauri/src/config/mod.rs`).
   - When running in portable mode (built with `--features portable`, or when a `config/` directory exists alongside the executable), ScpCraft creates and stores `preferences.json`, `sites.json`, `bookmarks.json`, and `custom_commands.json` inside `<exe_dir>/config/`.
-  - Updated GitHub Actions (`.github/workflows/release.yml`) to build and upload `ScpCraft_<version>_x64-portable.zip` to the GitHub Release alongside the Windows installers.
+  - Updated GitHub Actions (`.github/workflows/release.yml`) to build and upload `ScpCraft_<version>_x64-portable.zip` (Windows) and `ScpCraft_<version>_x64-linux-portable.tar.gz` (Linux) using `pnpm tauri build --no-bundle --features portable`.
+
+### Changed
+- **Windows & Linux Typography Readability**: Applied the comfortable `15px` base font size and micro-typography scaling (`.text-[10px]`, `.text-[11px]`, `.text-xs`, `.text-sm`) in `src/App.css` across all platforms instead of macOS only.
 
 ## [0.1.7] - 2026-11-16
 

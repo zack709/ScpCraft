@@ -105,7 +105,7 @@ jobs:
         with:
           tagName: v__VERSION__
           releaseName: 'ScpCraft v__VERSION__'
-          releaseBody: 'Automated Windows (.msi/.exe/-portable.zip), macOS Universal (.dmg/.app), and Linux (.deb/.AppImage) builds.'
+          releaseBody: 'Automated Windows (.msi/.exe/-portable.zip), macOS Universal (.dmg/.app), and Linux (.deb/.AppImage/-portable.tar.gz) builds.'
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
@@ -138,3 +138,27 @@ jobs:
           Compress-Archive -Path "$stageDir/ScpCraft.exe" -DestinationPath $zipName -Force
 
           gh release upload "v$version" $zipName --clobber
+
+      - name: Build & upload Linux portable tar.gz
+        if: matrix.platform == 'ubuntu-22.04'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pnpm tauri build --no-bundle --features portable
+
+          version=$(node -e "console.log(require('./src-tauri/tauri.conf.json').version)")
+          bin_path="src-tauri/target/release/scpcraft"
+          if [ ! -f "$bin_path" ]; then
+            echo "Portable release binary not found at $bin_path"
+            exit 1
+          fi
+
+          stage_dir="portable-stage-linux"
+          mkdir -p "$stage_dir"
+          cp "$bin_path" "$stage_dir/scpcraft"
+          chmod +x "$stage_dir/scpcraft"
+
+          tar_name="ScpCraft_${version}_x64-linux-portable.tar.gz"
+          tar -C "$stage_dir" -czf "$tar_name" scpcraft
+
+          gh release upload "v$version" "$tar_name" --clobber
