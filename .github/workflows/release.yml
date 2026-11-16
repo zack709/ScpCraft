@@ -116,7 +116,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cargo build --release --manifest-path src-tauri/Cargo.toml --features portable
+          pnpm tauri build --no-bundle --features portable
 
           $conf = Get-Content -Raw "src-tauri/tauri.conf.json" | ConvertFrom-Json
           $version = $conf.version
