@@ -105,7 +105,36 @@ jobs:
         with:
           tagName: v__VERSION__
           releaseName: 'ScpCraft v__VERSION__'
-          releaseBody: 'Automated Windows (.msi/.exe), macOS Universal (.dmg/.app), and Linux (.deb/.AppImage) builds.'
+          releaseBody: 'Automated Windows (.msi/.exe/-portable.zip), macOS Universal (.dmg/.app), and Linux (.deb/.AppImage) builds.'
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+
+      - name: Build & upload Windows portable zip
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cargo build --release --manifest-path src-tauri/Cargo.toml --features portable
+
+          $conf = Get-Content -Raw "src-tauri/tauri.conf.json" | ConvertFrom-Json
+          $version = $conf.version
+
+          $exeCandidates = @(
+            "src-tauri/target/release/ScpCraft.exe",
+            "src-tauri/target/release/scpcraft.exe"
+          )
+          $exePath = $exeCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $exePath) {
+            throw "Portable release executable not found in src-tauri/target/release/"
+          }
+
+          $stageDir = "portable-stage"
+          New-Item -ItemType Directory -Force -Path $stageDir | Out-Null
+          Copy-Item $exePath "$stageDir/ScpCraft.exe" -Force
+
+          $zipName = "ScpCraft_${version}_x64-portable.zip"
+          Compress-Archive -Path "$stageDir/ScpCraft.exe" -DestinationPath $zipName -Force
+
+          gh release upload "v$version" $zipName --clobber

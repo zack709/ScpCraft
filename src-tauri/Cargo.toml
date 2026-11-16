@@ -1,6 +1,6 @@
 [package]
 name = "scpcraft"
-version = "0.1.7"
+version = "0.1.8"
 description = "Cross-platform dual-pane SFTP, SCP, FTP, WebDAV & S3 file transfer client"
 authors = ["zack709", "ScpCraft Contributors"]
 license = "Apache-2.0"
@@ -14,6 +14,10 @@ edition = "2024"
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
 name = "scpcraft_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
+
+[features]
+default = []
+portable = []
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

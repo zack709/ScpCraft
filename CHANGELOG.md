@@ -2,6 +2,14 @@
 
 All notable changes to **ScpCraft** will be documented in this file.
 
+## [0.1.8] - 2026-11-16
+
+### Added
+- **Windows Portable Build & Local `config/` Directory**:
+  - Added a `portable` Cargo feature (`src-tauri/Cargo.toml`) and centralized config directory resolution (`app_config_dir` in `src-tauri/src/config/mod.rs`).
+  - When running in portable mode (built with `--features portable`, or when a `config/` directory exists alongside the executable), ScpCraft creates and stores `preferences.json`, `sites.json`, `bookmarks.json`, and `custom_commands.json` inside `<exe_dir>/config/`.
+  - Updated GitHub Actions (`.github/workflows/release.yml`) to build and upload `ScpCraft_<version>_x64-portable.zip` to the GitHub Release alongside the Windows installers.
+
 ## [0.1.7] - 2026-11-16
 
 ### Changed

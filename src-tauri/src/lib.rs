@@ -18,6 +18,9 @@ pub fn run() {
         .manage(sync::watcher::KeepUpToDateManager::default())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
+            if config::is_portable_mode() {
+                let _ = config::app_config_dir();
+            }
             if let Ok(app_menu) = menu::build_app_menu(app.handle()) {
                 let _ = app.set_menu(app_menu);
             }

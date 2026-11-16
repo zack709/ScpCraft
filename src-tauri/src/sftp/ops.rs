@@ -952,10 +952,7 @@ pub async fn sftp_set_permissions(
 }
 
 fn default_bookmarks_path() -> PathBuf {
-    dirs::config_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join("ScpCraft")
-        .join("bookmarks.json")
+    crate::config::app_config_dir().join("bookmarks.json")
 }
 
 pub fn load_bookmarks_from_path(

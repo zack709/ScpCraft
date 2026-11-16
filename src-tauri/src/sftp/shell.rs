@@ -157,10 +157,7 @@ pub fn expand_custom_command_pattern(
 }
 
 fn custom_commands_store_path() -> PathBuf {
-    dirs::config_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join("ScpCraft")
-        .join("custom_commands.json")
+    crate::config::app_config_dir().join("custom_commands.json")
 }
 
 pub fn default_custom_command_presets() -> Vec<CustomCommandPreset> {

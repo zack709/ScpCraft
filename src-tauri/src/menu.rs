@@ -89,9 +89,7 @@ pub struct GenerateUrlBundle {
 }
 
 fn scpcraft_config_dir() -> PathBuf {
-    dirs::config_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join("ScpCraft")
+    crate::config::app_config_dir()
 }
 
 pub fn default_preferences_path() -> PathBuf {

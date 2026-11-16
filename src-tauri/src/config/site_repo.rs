@@ -51,10 +51,7 @@ pub struct GeneratedSessionUrlResult {
 }
 
 fn default_repo_path() -> PathBuf {
-    dirs::config_dir()
-        .unwrap_or_else(|| PathBuf::from("."))
-        .join("ScpCraft")
-        .join("sites.json")
+    super::app_config_dir().join("sites.json")
 }
 
 pub fn load_repo_from_path(path: &Path) -> Result<SiteRepositoryFile, String> {
