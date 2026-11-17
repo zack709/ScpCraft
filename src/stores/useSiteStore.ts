@@ -68,8 +68,9 @@ interface SiteStore {
   deleteSelectedSite: () => Promise<void>;
   renameSelectedSite: (newName: string) => Promise<void>;
   cloneSelectedSite: () => Promise<void>;
-  createFolder: (folderName: string) => Promise<void>;
+  createFolder: (folderName: string, options?: { selectFolder?: boolean }) => Promise<void>;
   deleteSelectedFolder: () => Promise<void>;
+  moveSiteToFolder: (siteId: string, folder: string | null) => Promise<void>;
   setShowLoginOnStartup: (show: boolean) => Promise<void>;
 
   importFromYamlText: (yamlText: string) => Promise<number>;
@@ -389,17 +390,18 @@ export const useSiteStore = create<SiteStore>((set, get) => ({
     }
   },
 
-  createFolder: async (folderName) => {
+  createFolder: async (folderName, options) => {
     set({ busy: true, error: null });
     try {
       const repo = await siteApi.createFolder(folderName);
       const trimmed = folderName.trim().replace(/^\/+|\/+$/g, '');
+      const shouldSelect = options?.selectFolder !== false;
       set((s) => ({
         busy: false,
         sites: repo.sites,
         folders: repo.folders,
         expandedFolders: Array.from(new Set([...s.expandedFolders, trimmed])),
-        selection: { kind: 'folder', folder: trimmed },
+        selection: shouldSelect ? { kind: 'folder', folder: trimmed } : s.selection,
         notice: `Created folder "${trimmed}".`,
       }));
     } catch (err) {
@@ -422,6 +424,46 @@ export const useSiteStore = create<SiteStore>((set, get) => ({
         draftSite: createEmptySiteConfig(),
         notice: `Deleted folder "${sel.folder}" (child sites moved to root).`,
       });
+    } catch (err) {
+      set({ busy: false, error: String(err) });
+    }
+  },
+
+  moveSiteToFolder: async (siteId, folder) => {
+    const state = get();
+    const target = state.sites.find((x) => x.id === siteId);
+    if (!target) return;
+    const normalizedFolder = folder?.trim().replace(/^\/+|\/+$/g, '') || null;
+    if ((target.folder ?? null) === normalizedFolder) return;
+
+    set({ busy: true, error: null });
+    try {
+      const updatedSite: SiteConfig = { ...target, folder: normalizedFolder };
+      const repo = await siteApi.saveSite(
+        updatedSite,
+        {
+          password: null,
+          passphrase: null,
+          tunnelPassword: null,
+        },
+        false
+      );
+      const savedMatch = repo.sites.find((x) => x.id === siteId);
+      set((s) => ({
+        busy: false,
+        sites: repo.sites,
+        folders: repo.folders,
+        expandedFolders: normalizedFolder
+          ? Array.from(new Set([...s.expandedFolders, normalizedFolder]))
+          : s.expandedFolders,
+        draftSite:
+          s.selection.kind === 'site' && s.selection.siteId === siteId && savedMatch
+            ? structuredClone(savedMatch)
+            : s.draftSite,
+        notice: normalizedFolder
+          ? `Moved "${target.name}" to folder "${normalizedFolder}".`
+          : `Moved "${target.name}" to root.`,
+      }));
     } catch (err) {
       set({ busy: false, error: String(err) });
     }

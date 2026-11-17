@@ -30,12 +30,23 @@ type SubPromptState =
   | null
   | { kind: 'saveAs'; name: string; folder: string }
   | { kind: 'rename'; name: string }
-  | { kind: 'newFolder'; name: string }
+  | { kind: 'newFolder'; name: string; assignToDraft?: boolean }
   | { kind: 'pasteUrl'; url: string }
   | { kind: 'generateUrl'; url: string; cli: string; includePwd: boolean }
   | { kind: 'importYaml'; text: string }
   | { kind: 'exportYaml'; text: string }
   | { kind: 'help' };
+
+type TreeContextMenuState =
+  | null
+  | {
+      x: number;
+      y: number;
+      target:
+        | { kind: 'site'; site: SiteConfig }
+        | { kind: 'folder'; folder: string }
+        | { kind: 'empty' };
+    };
 
 function matchesSearch(site: SiteConfig, query: string, mode: SiteSearchMode): boolean {
   const q = query.trim().toLowerCase();
@@ -96,6 +107,7 @@ export function SiteManagerModal() {
     cloneSelectedSite,
     createFolder,
     deleteSelectedFolder,
+    moveSiteToFolder,
     setShowLoginOnStartup,
     importFromYamlText,
     exportToYamlText,
@@ -109,11 +121,29 @@ export function SiteManagerModal() {
   const [searchMenuOpen, setSearchMenuOpen] = useState(false);
   const [showPasswordText, setShowPasswordText] = useState(false);
   const [subPrompt, setSubPrompt] = useState<SubPromptState>(null);
+  const [dragState, setDragState] = useState<null | {
+    siteId: string;
+    siteName: string;
+    x: number;
+    y: number;
+  }>(null);
+  const [dragOverTarget, setDragOverTarget] = useState<string | null>(null);
+  const [treeContextMenu, setTreeContextMenu] = useState<TreeContextMenuState>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toolsRef = useRef<HTMLDivElement>(null);
   const manageRef = useRef<HTMLDivElement>(null);
   const searchMenuRef = useRef<HTMLDivElement>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
+  const pendingDragRef = useRef<null | {
+    siteId: string;
+    siteName: string;
+    startX: number;
+    startY: number;
+    active: boolean;
+  }>(null);
+  const dragOverTargetRef = useRef<string | null>(null);
+  const justDraggedRef = useRef(false);
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
@@ -121,10 +151,60 @@ export function SiteManagerModal() {
       if (toolsRef.current && !toolsRef.current.contains(target)) setToolsOpen(false);
       if (manageRef.current && !manageRef.current.contains(target)) setManageOpen(false);
       if (searchMenuRef.current && !searchMenuRef.current.contains(target)) setSearchMenuOpen(false);
+      if (contextMenuRef.current && !contextMenuRef.current.contains(target)) {
+        setTreeContextMenu(null);
+      }
+    };
+    const onMove = (e: MouseEvent) => {
+      const pending = pendingDragRef.current;
+      if (!pending) return;
+      if (!pending.active) {
+        if (Math.hypot(e.clientX - pending.startX, e.clientY - pending.startY) < 5) {
+          return;
+        }
+        pending.active = true;
+      }
+      setDragState({
+        siteId: pending.siteId,
+        siteName: pending.siteName,
+        x: e.clientX,
+        y: e.clientY,
+      });
+      const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+      const dropEl = el?.closest('[data-drop-folder]') as HTMLElement | null;
+      const targetFolder = dropEl?.getAttribute('data-drop-folder') ?? null;
+      dragOverTargetRef.current = targetFolder;
+      setDragOverTarget(targetFolder);
+    };
+    const onUp = () => {
+      const pending = pendingDragRef.current;
+      if (!pending) return;
+      pendingDragRef.current = null;
+      const target = dragOverTargetRef.current;
+      dragOverTargetRef.current = null;
+      setDragState(null);
+      setDragOverTarget(null);
+      if (pending.active) {
+        justDraggedRef.current = true;
+        setTimeout(() => {
+          justDraggedRef.current = false;
+        }, 0);
+        if (target === '__root__') {
+          void moveSiteToFolder(pending.siteId, null);
+        } else if (target) {
+          void moveSiteToFolder(pending.siteId, target);
+        }
+      }
     };
     window.addEventListener('mousedown', onDown);
-    return () => window.removeEventListener('mousedown', onDown);
-  }, []);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousedown', onDown);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, [moveSiteToFolder]);
 
   const filteredSites = useMemo(
     () => sites.filter((s) => matchesSearch(s, searchQuery, searchMode)),
@@ -263,25 +343,55 @@ export function SiteManagerModal() {
               }`}
             >
               {/* SessionTree */}
-              <div className="flex-1 overflow-y-auto scpcraft-scroll p-1 space-y-0.5">
-                {/* Fixed top item: New Site */}
-                <button
-                  type="button"
-                  onClick={selectNewSite}
-                  className={`w-full flex items-center gap-1.5 px-1.5 py-1 text-left ${
-                    selection.kind === 'newSite'
-                      ? 'bg-[#1e4b85] text-white'
-                      : isDark
-                      ? 'hover:bg-[#2c2c2e] text-[#e0e0e0]'
-                      : 'hover:bg-[#e5f1fb] text-[#1e1e1e]'
-                  }`}
-                >
-                  <span className="relative inline-flex items-center">
-                    <Monitor className="w-3.5 h-3.5 text-sky-400" />
-                    <Sparkles className="w-2.5 h-2.5 text-amber-300 -ml-1 -mt-2" />
-                  </span>
-                  <span className="truncate font-medium">{t('site.newSite')}</span>
-                </button>
+              <div
+                data-drop-folder="__root__"
+                className={`flex-1 overflow-y-auto scpcraft-scroll p-1 space-y-0.5 ${
+                  dragState && dragOverTarget === '__root__'
+                    ? isDark
+                      ? 'ring-1 ring-inset ring-[#4da3ff] bg-[#1e4b85]/15'
+                      : 'ring-1 ring-inset ring-[#0078d7] bg-[#e5f1fb]/50'
+                    : ''
+                }`}
+                onContextMenu={(e) => {
+                  if (e.target === e.currentTarget) {
+                    e.preventDefault();
+                    setTreeContextMenu({ x: e.clientX, y: e.clientY, target: { kind: 'empty' } });
+                  }
+                }}
+              >
+                {/* Fixed top item: New Site + New Folder */}
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={selectNewSite}
+                    className={`flex-1 min-w-0 flex items-center gap-1.5 px-1.5 py-1 text-left ${
+                      selection.kind === 'newSite'
+                        ? 'bg-[#1e4b85] text-white'
+                        : isDark
+                        ? 'hover:bg-[#2c2c2e] text-[#e0e0e0]'
+                        : 'hover:bg-[#e5f1fb] text-[#1e1e1e]'
+                    }`}
+                  >
+                    <span className="relative inline-flex items-center shrink-0">
+                      <Monitor className="w-3.5 h-3.5 text-sky-400" />
+                      <Sparkles className="w-2.5 h-2.5 text-amber-300 -ml-1 -mt-2" />
+                    </span>
+                    <span className="truncate font-medium">{t('site.newSite')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSubPrompt({ kind: 'newFolder', name: '' })}
+                    title={t('site.createFolderTip')}
+                    aria-label={t('site.createFolderTip')}
+                    className={`px-1.5 py-1 shrink-0 border ${
+                      isDark
+                        ? 'border-[#3a3a3c] hover:bg-[#2c2c2e] text-[#eab308]'
+                        : 'border-[#d0d0d0] hover:bg-[#e5f1fb] text-[#b45309]'
+                    }`}
+                  >
+                    <FolderPlus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
 
                 {/* Expandable Folder Groups */}
                 {visibleFolders.map((folder) => {
@@ -289,12 +399,42 @@ export function SiteManagerModal() {
                   const folderSelected =
                     selection.kind === 'folder' && selection.folder === folder;
                   const children = filteredSites.filter((s) => s.folder === folder);
+                  const isDragOver = dragOverTarget === folder;
 
                   return (
-                    <div key={folder}>
+                    <div
+                      key={folder}
+                      data-drop-folder={folder}
+                      onMouseEnter={() => {
+                        if (pendingDragRef.current?.active) {
+                          dragOverTargetRef.current = folder;
+                          setDragOverTarget(folder);
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        if (pendingDragRef.current?.active && dragOverTargetRef.current === folder) {
+                          dragOverTargetRef.current = '__root__';
+                          setDragOverTarget('__root__');
+                        }
+                      }}
+                    >
                       <div
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          selectFolder(folder);
+                          setTreeContextMenu({
+                            x: e.clientX,
+                            y: e.clientY,
+                            target: { kind: 'folder', folder },
+                          });
+                        }}
                         className={`flex items-center gap-1 px-1 py-0.5 cursor-pointer ${
-                          folderSelected
+                          isDragOver
+                            ? isDark
+                              ? 'ring-1 ring-[#4da3ff] bg-[#1e4b85]/40 text-white'
+                              : 'ring-1 ring-[#0078d7] bg-[#cfe4f7] text-[#1e1e1e]'
+                            : folderSelected
                             ? 'bg-[#1e4b85] text-white'
                             : isDark
                             ? 'hover:bg-[#2c2c2e] text-[#dcdcdc]'
@@ -320,27 +460,59 @@ export function SiteManagerModal() {
                           type="button"
                           onClick={() => selectFolder(folder)}
                           onDoubleClick={() => toggleFolderExpanded(folder)}
-                          className="flex-1 flex items-center gap-1.5 text-left truncate py-0.5"
+                          className="flex-1 flex items-center gap-1.5 text-left min-w-0 py-0.5"
                         >
                           <Folder className="w-3.5 h-3.5 text-[#eab308] shrink-0 fill-[#eab308]/25" />
-                          <span className="truncate">{folder}</span>
+                          <span className="truncate flex-1">{folder}</span>
+                          <span className="text-[10px] opacity-60 shrink-0 pr-0.5">
+                            ({children.length})
+                          </span>
                         </button>
                       </div>
 
                       {expanded && (
-                        <div className="pl-5 space-y-0.5 mt-0.5">
+                        <div
+                          className={`ml-3 pl-2.5 border-l space-y-0.5 mt-0.5 ${
+                            isDark ? 'border-[#454548]' : 'border-[#c4c4c4]'
+                          }`}
+                        >
                           {children.map((site) => {
                             const selected =
                               selection.kind === 'site' && selection.siteId === site.id;
                             return (
-                              <button
+                              <div
                                 key={site.id}
-                                type="button"
-                                onClick={() => void selectSite(site.id, false)}
+                                role="button"
+                                tabIndex={0}
+                                onMouseDown={(e) => {
+                                  if (e.button !== 0) return;
+                                  e.preventDefault();
+                                  pendingDragRef.current = {
+                                    siteId: site.id,
+                                    siteName: site.name,
+                                    startX: e.clientX,
+                                    startY: e.clientY,
+                                    active: false,
+                                  };
+                                }}
+                                onClick={() => {
+                                  if (justDraggedRef.current) return;
+                                  void selectSite(site.id, false);
+                                }}
                                 onDoubleClick={() =>
                                   void selectSite(site.id, false).then(() => loginWithCurrent())
                                 }
-                                className={`w-full flex items-center gap-1.5 px-1.5 py-0.5 text-left ${
+                                onContextMenu={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  void selectSite(site.id, false);
+                                  setTreeContextMenu({
+                                    x: e.clientX,
+                                    y: e.clientY,
+                                    target: { kind: 'site', site },
+                                  });
+                                }}
+                                className={`w-full flex items-center gap-1.5 pr-1.5 pl-0.5 py-0.5 text-left select-none cursor-pointer ${
                                   selected
                                     ? 'bg-[#1e4b85] text-white'
                                     : isDark
@@ -348,12 +520,17 @@ export function SiteManagerModal() {
                                     : 'hover:bg-[#e5f1fb] text-[#1e1e1e]'
                                 }`}
                               >
+                                <span
+                                  className={`w-2 h-px shrink-0 ${
+                                    isDark ? 'bg-[#454548]' : 'bg-[#c4c4c4]'
+                                  }`}
+                                />
                                 <Monitor
                                   className="w-3.5 h-3.5 shrink-0"
                                   style={{ color: site.color ?? '#38bdf8' }}
                                 />
                                 <span className="truncate">{site.name}</span>
-                              </button>
+                              </div>
                             );
                           })}
                         </div>
@@ -366,14 +543,39 @@ export function SiteManagerModal() {
                 {rootSites.map((site) => {
                   const selected = selection.kind === 'site' && selection.siteId === site.id;
                   return (
-                    <button
+                    <div
                       key={site.id}
-                      type="button"
-                      onClick={() => void selectSite(site.id, false)}
+                      role="button"
+                      tabIndex={0}
+                      onMouseDown={(e) => {
+                        if (e.button !== 0) return;
+                        e.preventDefault();
+                        pendingDragRef.current = {
+                          siteId: site.id,
+                          siteName: site.name,
+                          startX: e.clientX,
+                          startY: e.clientY,
+                          active: false,
+                        };
+                      }}
+                      onClick={() => {
+                        if (justDraggedRef.current) return;
+                        void selectSite(site.id, false);
+                      }}
                       onDoubleClick={() =>
                         void selectSite(site.id, false).then(() => loginWithCurrent())
                       }
-                      className={`w-full flex items-center gap-1.5 px-1.5 py-0.5 text-left ${
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        void selectSite(site.id, false);
+                        setTreeContextMenu({
+                          x: e.clientX,
+                          y: e.clientY,
+                          target: { kind: 'site', site },
+                        });
+                      }}
+                      className={`w-full flex items-center gap-1.5 px-1.5 py-0.5 text-left select-none cursor-pointer ${
                         selected
                           ? 'bg-[#1e4b85] text-white'
                           : isDark
@@ -386,7 +588,7 @@ export function SiteManagerModal() {
                         style={{ color: site.color ?? '#38bdf8' }}
                       />
                       <span className="truncate">{site.name}</span>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -400,6 +602,9 @@ export function SiteManagerModal() {
                 <Search className="w-3 h-3 opacity-70 shrink-0" />
                 <input
                   type="text"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('site.searchPlaceholder')}
@@ -802,6 +1007,9 @@ export function SiteManagerModal() {
                       </label>
                       <input
                         type="text"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
                         disabled={!editable}
                         value={draftSite.hostName}
                         onChange={(e) =>
@@ -840,6 +1048,9 @@ export function SiteManagerModal() {
                       </label>
                       <input
                         type="text"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
                         disabled={
                           !editable ||
                           (draftSite.protocol === 'ftp' && draftSite.anonymousLogin) ||
@@ -870,6 +1081,9 @@ export function SiteManagerModal() {
                       <div className="relative">
                         <input
                           type={showPasswordText ? 'text' : 'password'}
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck={false}
                           disabled={
                             !editable ||
                             (draftSite.protocol === 'ftp' && draftSite.anonymousLogin) ||
@@ -930,6 +1144,43 @@ export function SiteManagerModal() {
                       <span>{t('site.s3EnvCreds')}</span>
                     </label>
                   )}
+
+                  {/* Folder / Group selector */}
+                  <div>
+                    <label className="block mb-1 opacity-90">{t('site.folderSelect')}</label>
+                    <div className="flex items-center gap-1.5">
+                      <select
+                        aria-label={t('site.folderSelect')}
+                        disabled={!editable}
+                        value={draftSite.folder ?? ''}
+                        onChange={(e) =>
+                          updateDraft((s) => ({
+                            ...s,
+                            folder: e.target.value || null,
+                          }))
+                        }
+                        className={inputCls}
+                      >
+                        <option value="">{t('site.noFolder')}</option>
+                        {folders.map((f) => (
+                          <option key={f} value={f}>
+                            {f}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        disabled={!editable}
+                        onClick={() =>
+                          setSubPrompt({ kind: 'newFolder', name: '', assignToDraft: true })
+                        }
+                        title={t('site.createFolderTip')}
+                        className={`${dialogBtnCls} px-2 shrink-0`}
+                      >
+                        <FolderPlus className="w-3.5 h-3.5 text-[#eab308]" />
+                      </button>
+                    </div>
+                  </div>
 
                   {/* Row 4: Action buttons (Edit vs Save/Cancel + Advanced...) */}
                   <div className="flex items-center justify-between pt-1">
@@ -1195,7 +1446,16 @@ export function SiteManagerModal() {
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    void createFolder(subPrompt.name).then(() => setSubPrompt(null));
+                    const trimmed = subPrompt.name.trim().replace(/^\/+|\/+$/g, '');
+                    const assignToDraft = Boolean(subPrompt.assignToDraft);
+                    void createFolder(subPrompt.name, {
+                      selectFolder: !assignToDraft,
+                    }).then(() => {
+                      if (assignToDraft && trimmed) {
+                        updateDraft((s) => ({ ...s, folder: trimmed }));
+                      }
+                      setSubPrompt(null);
+                    });
                   }}
                   className="space-y-3"
                 >
@@ -1391,6 +1651,245 @@ export function SiteManagerModal() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {treeContextMenu && (
+          <div
+            ref={contextMenuRef}
+            style={{ left: treeContextMenu.x, top: treeContextMenu.y }}
+            className={`fixed z-[60] min-w-[180px] border shadow-2xl py-1 text-xs ${
+              isDark
+                ? 'bg-[#252526] border-[#454545] text-[#e0e0e0]'
+                : 'bg-white border-[#c0c0c0] text-[#1e1e1e]'
+            }`}
+          >
+            {treeContextMenu.target.kind === 'site' && (() => {
+              const targetSite = treeContextMenu.target.site;
+              return (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTreeContextMenu(null);
+                      void selectSite(targetSite.id, false).then(() => loginWithCurrent());
+                    }}
+                    className={`w-full px-3 py-1.5 text-left flex items-center gap-2 font-medium ${
+                      isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
+                    }`}
+                  >
+                    <LogIn className="w-3.5 h-3.5 text-sky-400" />
+                    {t('site.login')}
+                  </button>
+                  <div className={`my-1 border-t ${isDark ? 'border-[#3a3a3a]' : 'border-[#e0e0e0]'}`} />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTreeContextMenu(null);
+                      void selectSite(targetSite.id, true);
+                    }}
+                    className={`w-full px-3 py-1.5 text-left flex items-center gap-2 ${
+                      isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
+                    }`}
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    {t('site.edit')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTreeContextMenu(null);
+                      setSubPrompt({
+                        kind: 'saveAs',
+                        name: targetSite.name,
+                        folder: targetSite.folder ?? '',
+                      });
+                    }}
+                    className={`w-full px-3 py-1.5 text-left flex items-center gap-2 ${
+                      isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
+                    }`}
+                  >
+                    <span className="w-3.5" />
+                    {t('site.saveAs')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTreeContextMenu(null);
+                      setSubPrompt({ kind: 'rename', name: targetSite.name });
+                    }}
+                    className={`w-full px-3 py-1.5 text-left flex items-center gap-2 ${
+                      isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
+                    }`}
+                  >
+                    <span className="w-3.5" />
+                    {t('site.rename')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTreeContextMenu(null);
+                      void cloneSelectedSite();
+                    }}
+                    className={`w-full px-3 py-1.5 text-left flex items-center gap-2 ${
+                      isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
+                    }`}
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    {t('site.clone')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTreeContextMenu(null);
+                      void selectSite(targetSite.id, false).then(() => handleOpenGenerateUrl(false));
+                    }}
+                    className={`w-full px-3 py-1.5 text-left flex items-center gap-2 ${
+                      isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
+                    }`}
+                  >
+                    <span className="w-3.5" />
+                    {t('site.genUrl')}
+                  </button>
+                  <div className={`my-1 border-t ${isDark ? 'border-[#3a3a3a]' : 'border-[#e0e0e0]'}`} />
+                  <div className="px-3 py-1 text-[10px] opacity-60 uppercase tracking-wider">
+                    {t('site.moveToFolder')}
+                  </div>
+                  {targetSite.folder && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTreeContextMenu(null);
+                        void moveSiteToFolder(targetSite.id, null);
+                      }}
+                      className={`w-full px-3 py-1.5 text-left flex items-center gap-2 ${
+                        isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
+                      }`}
+                    >
+                      <Monitor className="w-3.5 h-3.5 opacity-75" />
+                      {t('site.moveToRoot')}
+                    </button>
+                  )}
+                  {folders
+                    .filter((f) => f !== targetSite.folder)
+                    .map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => {
+                          setTreeContextMenu(null);
+                          void moveSiteToFolder(targetSite.id, f);
+                        }}
+                        className={`w-full px-3 py-1.5 text-left flex items-center gap-2 ${
+                          isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
+                        }`}
+                      >
+                        <Folder className="w-3.5 h-3.5 text-[#eab308]" />
+                        <span className="truncate">{f}</span>
+                      </button>
+                    ))}
+                  <div className={`my-1 border-t ${isDark ? 'border-[#3a3a3a]' : 'border-[#e0e0e0]'}`} />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTreeContextMenu(null);
+                      void deleteSelectedSite();
+                    }}
+                    className={`w-full px-3 py-1.5 text-left flex items-center gap-2 text-red-400 ${
+                      isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
+                    }`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    {t('site.deleteSite')}
+                  </button>
+                </>
+              );
+            })()}
+
+            {treeContextMenu.target.kind === 'folder' && (() => {
+              const targetFolder = treeContextMenu.target.folder;
+              return (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTreeContextMenu(null);
+                      selectNewSite();
+                      updateDraft((s) => ({ ...s, folder: targetFolder }));
+                    }}
+                    className={`w-full px-3 py-1.5 text-left flex items-center gap-2 ${
+                      isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
+                    }`}
+                  >
+                    <Plus className="w-3.5 h-3.5 text-sky-400" />
+                    {t('site.newSiteHere')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTreeContextMenu(null);
+                      void deleteSelectedFolder();
+                    }}
+                    className={`w-full px-3 py-1.5 text-left flex items-center gap-2 text-red-400 ${
+                      isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
+                    }`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    {t('site.removeFolder')}
+                  </button>
+                </>
+              );
+            })()}
+
+            {treeContextMenu.target.kind === 'empty' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTreeContextMenu(null);
+                    selectNewSite();
+                  }}
+                  className={`w-full px-3 py-1.5 text-left flex items-center gap-2 ${
+                    isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
+                  }`}
+                >
+                  <Plus className="w-3.5 h-3.5 text-sky-400" />
+                  {t('site.newSite')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTreeContextMenu(null);
+                    setSubPrompt({ kind: 'newFolder', name: '' });
+                  }}
+                  className={`w-full px-3 py-1.5 text-left flex items-center gap-2 ${
+                    isDark ? 'hover:bg-[#1e4b85]' : 'hover:bg-[#0078d7] hover:text-white'
+                  }`}
+                >
+                  <FolderPlus className="w-3.5 h-3.5 text-[#eab308]" />
+                  {t('site.newFolder')}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {dragState && (
+          <div
+            style={{ left: dragState.x + 12, top: dragState.y + 12 }}
+            className={`fixed z-[70] pointer-events-none px-2 py-1 border shadow-lg text-xs flex items-center gap-1.5 ${
+              isDark
+                ? 'bg-[#1e4b85] border-[#4da3ff] text-white'
+                : 'bg-[#0078d7] border-[#005a9e] text-white'
+            }`}
+          >
+            <Monitor className="w-3.5 h-3.5 shrink-0" />
+            <span className="font-medium">{dragState.siteName}</span>
+            {dragOverTarget && (
+              <span className="opacity-85 text-[11px]">
+                → {dragOverTarget === '__root__' ? t('site.moveToRoot') : dragOverTarget}
+              </span>
+            )}
           </div>
         )}
       </div>

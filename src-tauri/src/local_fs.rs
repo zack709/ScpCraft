@@ -654,6 +654,33 @@ pub async fn pick_private_key_file() -> Result<Option<String>, String> {
 }
 
 #[tauri::command]
+pub async fn pick_external_editor_file() -> Result<Option<String>, String> {
+    let mut dialog = rfd::AsyncFileDialog::new().set_title("Select External Editor");
+    #[cfg(target_os = "macos")]
+    {
+        let apps_dir = PathBuf::from("/Applications");
+        if apps_dir.is_dir() {
+            dialog = dialog.set_directory(apps_dir);
+        }
+        dialog = dialog
+            .add_filter("Applications", &["app"])
+            .add_filter("All Files", &["*"]);
+    }
+    #[cfg(target_os = "windows")]
+    {
+        dialog = dialog
+            .add_filter("Executable", &["exe", "cmd", "bat"])
+            .add_filter("All Files", &["*"]);
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        dialog = dialog.add_filter("All Files", &["*"]);
+    }
+    let picked = dialog.pick_file().await;
+    Ok(picked.map(|f| f.path().to_string_lossy().to_string()))
+}
+
+#[tauri::command]
 pub fn local_get_properties(
     path: String,
     calculate_dir_size: bool,

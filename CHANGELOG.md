@@ -2,6 +2,26 @@
 
 All notable changes to **ScpCraft** will be documented in this file.
 
+## [0.1.9] - 2026-11-17
+
+### Added
+- **Site Manager Folder Drag & Drop, Visual Hierarchy, and Context Menu**:
+  - Added pointer-based drag-and-drop (`moveSiteToFolder` in `src/stores/useSiteStore.ts`) so saved sites can be dragged into folders or back to root without modifying or clearing OS Keyring credentials.
+  - Added a right-click context menu on sites (Login, Edit, Save As, Rename, Clone, Generate Session URL, Move to Folder / Root, Delete), folders (New Site Here, Remove Folder), and empty tree area (New Site, New Folder).
+  - Added a prominent `New Folder` (`FolderPlus`) button next to `New Site`, folder item counts, tree indent guide lines for folder children, and a `Folder / Group` dropdown + quick-create button in the Session panel.
+- **External Editor File Picker & macOS `.app` Support**:
+  - Added `pick_external_editor_file` (`src-tauri/src/local_fs.rs`, exposed via `preferencesApi.pickExternalEditorFile`) and a `Browse...` button next to the External Editor command field in `PreferencesModal.tsx`.
+  - Updated `launch_external_process` (`src-tauri/src/editor_watch.rs`) to launch macOS `.app` bundles via `open -a`.
+- **Split Built-In & External Editor Double-Click Actions**:
+  - Split `doubleClickAction` in `PreferencesModal.tsx` into `Edit - Built-In Editor (F4)` (`edit_builtin`) and `Edit - External Editor` (`edit_external`), and wired `handleRowDoubleClick` in `FilePane.tsx` and `openFileInEditor` in `useWorkspaceStore.ts` to launch the external editor directly when `edit_external` is selected.
+
+### Changed
+- **Disabled Browser Default `Reload` Context Menu**: Intercepted global `contextmenu` events in `src/App.tsx` outside editable inputs (`INPUT`, `TEXTAREA`, `contentEditable`) so right-clicking UI elements no longer shows the default WebView `Reload` menu.
+
+### Fixed
+- **macOS Auto-Capitalization on Login & Editor Inputs**: Added `autoCapitalize="none"`, `autoCorrect="off"`, and `spellCheck={false}` to username, hostname, search, password, SSH tunnel, and external editor command input fields in `SiteManagerModal.tsx`, `AdvancedSiteModal.tsx`, and `PreferencesModal.tsx`.
+- **Preferences "Save & Apply" Button Stuck Disabled**: Reset `saving` state in `PreferencesModal.tsx` (`finally` block in `handleSave` and on modal open) so reopening Preferences after saving no longer leaves the Save button spinning and disabled.
+
 ## [0.1.8] - 2026-11-16
 
 ### Added

@@ -285,6 +285,22 @@ fn launch_external_process(local_path: &str, editor_command: Option<&str>) -> Re
     if let Some(cmd_str) = editor_command.map(str::trim).filter(|s| !s.is_empty()) {
         let tokens = parse_command_tokens(cmd_str);
         if let Some((prog, args)) = tokens.split_first() {
+            #[cfg(target_os = "macos")]
+            if Path::new(prog)
+                .extension()
+                .is_some_and(|e| e.eq_ignore_ascii_case("app"))
+            {
+                let mut cmd = std::process::Command::new("open");
+                cmd.arg("-a").arg(prog);
+                if !args.is_empty() {
+                    cmd.args(args);
+                }
+                cmd.arg(local_path);
+                cmd.spawn()
+                    .map_err(|e| format!("Failed launching editor '{}': {}", prog, e))?;
+                return Ok(prog.to_string());
+            }
+
             std::process::Command::new(prog)
                 .args(args)
                 .arg(local_path)

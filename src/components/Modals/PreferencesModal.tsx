@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Check, Loader2, Settings, X } from 'lucide-react';
+import { Check, FolderOpen, Loader2, Settings, X } from 'lucide-react';
 import { translate, type LocaleCode } from '../../i18n';
-import type { AppPreferences } from '../../services/phase6Api';
+import { preferencesApi, type AppPreferences } from '../../services/phase6Api';
 import { useWorkspaceStore } from '../../stores/useWorkspaceStore';
 
 type PrefCategory = 'environment' | 'confirmations' | 'transfer' | 'editor' | 'panels';
@@ -27,6 +27,7 @@ export function PreferencesModal() {
 
   useEffect(() => {
     if (!isOpen) return;
+    setSaving(false);
     setError(null);
     setDraft(preferences);
     void loadPreferences().then(() => {
@@ -46,7 +47,19 @@ export function PreferencesModal() {
       closeModal();
     } catch (err) {
       setError(String(err));
+    } finally {
       setSaving(false);
+    }
+  };
+
+  const handleBrowseExternalEditor = async () => {
+    try {
+      const picked = await preferencesApi.pickExternalEditorFile();
+      if (!picked) return;
+      const formatted = picked.includes(' ') ? `"${picked}"` : picked;
+      setDraft((d) => ({ ...d, externalEditorCommand: formatted }));
+    } catch (err) {
+      setError(String(err));
     }
   };
 
@@ -263,26 +276,48 @@ export function PreferencesModal() {
               <div className="space-y-3">
                 <div>
                   <label className="block mb-1 text-[11px] opacity-80">{t('pref.externalEditor')}</label>
-                  <input
-                    type="text"
-                    value={draft.externalEditorCommand}
-                    onChange={(e) =>
-                      setDraft((d) => ({ ...d, externalEditorCommand: e.target.value }))
-                    }
-                    placeholder="code --wait"
-                    className={`${inputCls} font-mono`}
-                  />
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      value={draft.externalEditorCommand}
+                      onChange={(e) =>
+                        setDraft((d) => ({ ...d, externalEditorCommand: e.target.value }))
+                      }
+                      placeholder="code --wait"
+                      className={`${inputCls} font-mono`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void handleBrowseExternalEditor()}
+                      className={`px-2.5 py-1.5 rounded border text-xs inline-flex items-center gap-1 shrink-0 ${
+                        isDark
+                          ? 'bg-[#2c2c2e] border-[#454545] hover:bg-[#3a3a3c] text-[#e0e0e0]'
+                          : 'bg-slate-100 border-slate-300 hover:bg-slate-200 text-slate-800'
+                      }`}
+                    >
+                      <FolderOpen className="w-3.5 h-3.5" />
+                      <span>{t('adv.browseFile')}</span>
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block mb-1 text-[11px] opacity-80">{t('pref.dblClick')}</label>
                   <select
-                    value={draft.doubleClickAction}
+                    value={
+                      draft.doubleClickAction === 'edit'
+                        ? 'edit_builtin'
+                        : draft.doubleClickAction
+                    }
                     onChange={(e) =>
                       setDraft((d) => ({ ...d, doubleClickAction: e.target.value }))
                     }
                     className={inputCls}
                   >
-                    <option value="edit">Edit (Built-in / External Editor, F4)</option>
+                    <option value="edit_builtin">Edit - Built-In Editor (F4)</option>
+                    <option value="edit_external">Edit - External Editor</option>
                     <option value="properties">Properties (F9)</option>
                     <option value="open">Transfer / Copy</option>
                   </select>

@@ -239,7 +239,7 @@ interface WorkspaceStore {
   copyOrMoveSelected: (sourcePane: PaneId, targetDir: string, isMove: boolean) => Promise<void>;
   runCommandInput: (cmd: string) => void;
 
-  openFileInEditor: (pane: PaneId, path?: string) => Promise<void>;
+  openFileInEditor: (pane: PaneId, path?: string, mode?: 'builtin' | 'external') => Promise<void>;
   setActiveEditorDocId: (docId: string | null) => void;
   updateEditorDraft: (docId: string, content: string) => void;
   updateEditorDocMeta: (doc: EditorDocument, resetDraft?: boolean) => void;
@@ -1455,8 +1455,10 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => {
       })();
     },
 
-    openFileInEditor: async (pane, explicitPath) => {
+    openFileInEditor: async (pane, explicitPath, mode) => {
       const state = get();
+      const resolvedMode =
+        mode ?? (state.preferences.doubleClickAction === 'edit_external' ? 'external' : 'builtin');
       const p = getPane(state, pane);
       const targetPath = explicitPath ?? getTargetPathsForPane(p)[0];
       if (!targetPath) return;
@@ -1475,6 +1477,33 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => {
           path: targetPath,
           isRemote,
         });
+
+        if (resolvedMode === 'external') {
+          const externalCmd = state.preferences.externalEditorCommand.trim() || null;
+          const msg = await editorApi.openExternal(doc.docId, externalCmd);
+          const watchedDoc = { ...doc, watchingExternal: true };
+          set((s) => {
+            const exists = s.openEditorFiles.some((d) => d.docId === doc.docId);
+            return {
+              openEditorFiles: exists
+                ? s.openEditorFiles.map((d) => (d.docId === doc.docId ? watchedDoc : d))
+                : [...s.openEditorFiles, watchedDoc],
+              editorDrafts: {
+                ...s.editorDrafts,
+                [doc.docId]: doc.content,
+              },
+            };
+          });
+          get().addQueueLog({
+            operation: 'copy',
+            source: targetPath,
+            target: 'External Editor Watch',
+            status: 'done',
+            detail: msg,
+          });
+          return;
+        }
+
         set((s) => {
           const exists = s.openEditorFiles.some((d) => d.docId === doc.docId);
           return {
@@ -1493,7 +1522,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => {
         get().addQueueLog({
           operation: 'copy',
           source: targetPath,
-          target: 'Built-in Editor',
+          target: resolvedMode === 'external' ? 'External Editor' : 'Built-in Editor',
           status: 'error',
           detail: String(err),
         });

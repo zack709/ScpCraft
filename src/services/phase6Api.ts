@@ -15,7 +15,7 @@ export interface AppPreferences {
   defaultSpeedLimitKbps: number;
   useFilepartResume: boolean;
   externalEditorCommand: string;
-  doubleClickAction: 'edit' | 'open' | 'properties' | string;
+  doubleClickAction: 'edit_builtin' | 'edit_external' | 'edit' | 'open' | 'properties' | string;
   rememberSessionTabs: boolean;
 }
 
@@ -57,6 +57,8 @@ export const preferencesApi = {
   get: () => invoke<AppPreferences>('app_preferences_get'),
   save: (preferences: AppPreferences) =>
     invoke<AppPreferences>('app_preferences_save', { preferences }),
+  pickExternalEditorFile: () =>
+    invoke<string | null>('pick_external_editor_file'),
 };
 
 export const cleanupApi = {

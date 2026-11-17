@@ -48,6 +48,23 @@ export function App() {
     void useSiteStore.getState().initSites();
   }, [initWorkspace]);
 
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      e.preventDefault();
+    };
+    window.addEventListener('contextmenu', handleContextMenu);
+    return () => window.removeEventListener('contextmenu', handleContextMenu);
+  }, []);
+
   const workspaceRef = useRef<HTMLDivElement>(null);
 
   const startHorizontalDrag = (e: React.MouseEvent) => {

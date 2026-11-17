@@ -472,6 +472,9 @@ export function AdvancedSiteModal() {
                     <label className="block mb-1 opacity-85">{t('adv.tunnelHost')}</label>
                     <input
                       type="text"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       disabled={!editable || !adv.tunnel.enabled}
                       value={adv.tunnel.hostName}
                       onChange={(e) =>
@@ -516,6 +519,9 @@ export function AdvancedSiteModal() {
                     <label className="block mb-1 opacity-85">{t('adv.tunnelUser')}</label>
                     <input
                       type="text"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       disabled={!editable || !adv.tunnel.enabled}
                       value={adv.tunnel.userName}
                       onChange={(e) =>
@@ -548,6 +554,9 @@ export function AdvancedSiteModal() {
                     <div className="flex items-center gap-1.5">
                       <input
                         type="text"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
                         disabled={!editable || !adv.tunnel.enabled}
                         value={adv.tunnel.privateKeyPath}
                         onChange={(e) =>

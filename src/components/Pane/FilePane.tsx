@@ -112,6 +112,7 @@ export function FilePane({ paneId, title }: FilePaneProps) {
     clearSelection,
     openModal,
     openFileInEditor,
+    preferences,
   } = useWorkspaceStore();
   const t = (key: TranslationKey) => translate(locale, key);
 
@@ -422,7 +423,18 @@ export function FilePane({ paneId, title }: FilePaneProps) {
     if (isDirEntry(row.entry)) {
       void navigateTo(paneId, row.entry.path, true);
     } else {
-      void openFileInEditor(paneId, row.entry.path);
+      const action = preferences.doubleClickAction;
+      if (action === 'properties') {
+        selectSingle(paneId, row.entry.path);
+        openModal('properties', paneId);
+      } else if (action === 'open') {
+        selectSingle(paneId, row.entry.path);
+        openModal('copy', paneId);
+      } else if (action === 'edit_external') {
+        void openFileInEditor(paneId, row.entry.path, 'external');
+      } else {
+        void openFileInEditor(paneId, row.entry.path, 'builtin');
+      }
     }
   };
 
