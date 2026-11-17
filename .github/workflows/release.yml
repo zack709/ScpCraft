@@ -64,10 +64,16 @@ jobs:
         include:
           - platform: windows-latest
             args: ''
+            linux_arch: ''
           - platform: macos-latest
             args: '--target universal-apple-darwin'
+            linux_arch: ''
           - platform: ubuntu-22.04
             args: ''
+            linux_arch: 'x64'
+          - platform: ubuntu-22.04-arm
+            args: ''
+            linux_arch: 'arm64'
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -90,7 +96,7 @@ jobs:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: Install Linux Tauri build dependencies
-        if: matrix.platform == 'ubuntu-22.04'
+        if: startsWith(matrix.platform, 'ubuntu-')
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libsecret-1-dev
@@ -105,7 +111,7 @@ jobs:
         with:
           tagName: v__VERSION__
           releaseName: 'ScpCraft v__VERSION__'
-          releaseBody: 'Automated Windows (.msi/.exe/-portable.zip), macOS Universal (.dmg/.app), and Linux (.deb/.AppImage/-portable.tar.gz) builds.'
+          releaseBody: 'Automated Windows (.msi/.exe/-portable.zip), macOS Universal (.dmg/.app), and Linux x64 & ARM64 (.deb/.AppImage/-portable.tar.gz) builds.'
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
@@ -140,7 +146,7 @@ jobs:
           gh release upload "v$version" $zipName --clobber
 
       - name: Build & upload Linux portable tar.gz
-        if: matrix.platform == 'ubuntu-22.04'
+        if: startsWith(matrix.platform, 'ubuntu-')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -153,12 +159,12 @@ jobs:
             exit 1
           fi
 
-          stage_dir="portable-stage-linux"
+          stage_dir="portable-stage-linux-${{ matrix.linux_arch }}"
           mkdir -p "$stage_dir"
           cp "$bin_path" "$stage_dir/scpcraft"
           chmod +x "$stage_dir/scpcraft"
 
-          tar_name="ScpCraft_${version}_x64-linux-portable.tar.gz"
+          tar_name="ScpCraft_${version}_${{ matrix.linux_arch }}-linux-portable.tar.gz"
           tar -C "$stage_dir" -czf "$tar_name" scpcraft
 
           gh release upload "v$version" "$tar_name" --clobber
