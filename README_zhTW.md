@@ -6,6 +6,8 @@
 
 提供流暢且支援鍵盤快速鍵的 Commander（雙面板）／Explorer（單面板）操作體驗，並針對 **macOS**（Universal Apple Silicon + Intel）、**Windows** 與 **Linux** 提供原生平台介面優化。
 
+![ScpCraft 雙面板 Commander 介面](docs/screenshots/scpcraft-commander-zhTW.png)
+
 ---
 
 ## 核心功能

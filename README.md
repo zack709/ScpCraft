@@ -6,6 +6,8 @@
 
 It provides a fast, keyboard-friendly Commander / Explorer workflow with native platform polish across **macOS** (Universal Apple Silicon + Intel), **Windows**, and **Linux**.
 
+![ScpCraft Dual-Pane Commander](docs/screenshots/scpcraft-commander.png)
+
 ---
 
 ## Key Features
