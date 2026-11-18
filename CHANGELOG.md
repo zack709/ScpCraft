@@ -2,6 +2,13 @@
 
 All notable changes to **ScpCraft** will be documented in this file.
 
+## [0.1.10] - 2026-11-18
+
+### Fixed
+- **Linux Dark Theme Dropdowns & Native Form Controls**:
+  - Synced `data-theme` and CSS `color-scheme` (`dark` / `light`) on `<html>` (`src/main.tsx`, `src/App.tsx`, `src/App.css`) so WebKitGTK on Linux renders native dropdown popups and number input spinbuttons in the active theme.
+  - Styled `<select>` elements with `appearance: none`, custom theme-aware SVG chevron icons, and explicit `<option>` / `<optgroup>` colors in `src/App.css` so dropdown controls no longer render with white GTK native backgrounds in Dark Theme.
+
 ## [0.1.9] - 2026-11-17
 
 ### Added

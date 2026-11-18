@@ -1,6 +1,6 @@
 [package]
 name = "scpcraft"
-version = "0.1.9"
+version = "0.1.10"
 description = "Cross-platform dual-pane SFTP, SCP, FTP, WebDAV & S3 file transfer client"
 authors = ["zack709", "ScpCraft Contributors"]
 license = "Apache-2.0"
