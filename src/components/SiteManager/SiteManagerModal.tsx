@@ -285,12 +285,7 @@ export function SiteManagerModal() {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 select-none"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) closeLoginDialog();
-      }}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 select-none">
       <div
         className={`${
           isMac ? 'w-[840px] rounded-xl overflow-hidden' : 'w-[680px]'

@@ -4,6 +4,9 @@ All notable changes to **ScpCraft** will be documented in this file.
 
 ## [0.1.10] - 2026-11-18
 
+### Changed
+- **Prevent Accidental Login Dialog Dismissal**: Removed backdrop click-outside-to-close behavior from `SiteManagerModal.tsx` so the Login dialog can only be closed via its explicit close buttons.
+
 ### Fixed
 - **Linux Dark Theme Dropdowns & Native Form Controls**:
   - Synced `data-theme` and CSS `color-scheme` (`dark` / `light`) on `<html>` (`src/main.tsx`, `src/App.tsx`, `src/App.css`) so WebKitGTK on Linux renders native dropdown popups and number input spinbuttons in the active theme.
