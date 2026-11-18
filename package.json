@@ -2,7 +2,7 @@
   "name": "scpcraft",
   "private": true,
   "version": "0.1.10",
-  "license": "Apache-2.0",
+  "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "scripts": {
     "dev": "vite",

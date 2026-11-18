@@ -458,10 +458,10 @@ export function MainMenuBar() {
               <div className="font-semibold">Author: zack709</div>
               <div>Copyright &copy; 2026 zack709 &amp; ScpCraft Contributors</div>
               <div>
-                Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this software except in compliance with the License.
+                Licensed under the Apache License, Version 2.0 with Commons Clause v1.0; you may not use this software except in compliance with the License.
               </div>
               <div className="font-mono text-[10px] opacity-75">
-                http://www.apache.org/licenses/LICENSE-2.0
+                http://www.apache.org/licenses/LICENSE-2.0 | https://commonsclause.com/
               </div>
             </div>
             <div className="flex justify-end">

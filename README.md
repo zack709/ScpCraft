@@ -119,7 +119,7 @@ ScpCraft/
 │   ├── tauri.conf.json         # Base Tauri config
 │   └── tauri.macos.conf.json   # macOS overlay titlebar & window sizing
 ├── CHANGELOG.md                # Release history
-├── LICENSE                     # Apache License 2.0
+├── LICENSE                     # Apache License 2.0 + Commons Clause v1.0
 └── NOTICE                      # Attribution & clean-room notice
 ```
 
@@ -127,4 +127,4 @@ ScpCraft/
 
 ## License
 
-Licensed under the **Apache License, Version 2.0**. See [LICENSE](LICENSE) and [NOTICE](NOTICE) for details.
+Licensed under the **Apache License, Version 2.0** with the **Commons Clause License Condition v1.0**. See [LICENSE](LICENSE) and [NOTICE](NOTICE) for details.

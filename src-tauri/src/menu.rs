@@ -445,7 +445,7 @@ pub fn build_app_menu(app: &AppHandle) -> Result<Menu<tauri::Wry>, tauri::Error>
             authors: Some(vec!["zack709".into()]),
             copyright: Some("Copyright © 2026 zack709 & ScpCraft Contributors".into()),
             comments: Some("Cross-platform dual-pane SFTP, SCP, FTP, WebDAV & S3 file transfer client.".into()),
-            license: Some("Apache-2.0".into()),
+            license: Some("Apache-2.0 with Commons Clause v1.0".into()),
             ..Default::default()
         };
         let app_sub = SubmenuBuilder::new(app, "ScpCraft")

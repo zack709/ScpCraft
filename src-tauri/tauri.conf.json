@@ -28,7 +28,7 @@
     "active": true,
     "targets": "all",
     "category": "Utility",
-    "copyright": "Copyright 2026 ScpCraft Contributors. Licensed under the Apache License, Version 2.0.",
+    "copyright": "Copyright 2026 ScpCraft Contributors. Licensed under Apache-2.0 with Commons Clause v1.0.",
     "licenseFile": "../LICENSE",
     "shortDescription": "Cross-platform dual-pane SFTP, SCP, FTP, WebDAV & S3 file transfer client",
     "longDescription": "ScpCraft is a native cross-platform Commander/Explorer file manager and multi-protocol transfer client built with Tauri 2.0 (Rust + React/TypeScript), supporting SFTP/SCP, FTP/FTPS, Amazon S3/MinIO, WebDAV, integrated editor watch, SSH PTY terminal, and bidirectional directory synchronization.",

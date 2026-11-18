@@ -119,7 +119,7 @@ ScpCraft/
 │   ├── tauri.conf.json         # 基礎 Tauri 設定
 │   └── tauri.macos.conf.json   # macOS 標題列樣式與預設視窗尺寸
 ├── CHANGELOG.md                # 版本更新紀錄
-├── LICENSE                     # Apache License 2.0
+├── LICENSE                     # Apache License 2.0 + Commons Clause v1.0
 └── NOTICE                      # 版權與獨立實作聲明
 ```
 
@@ -127,4 +127,4 @@ ScpCraft/
 
 ## 授權條款
 
-本專案採用 **Apache License, Version 2.0** 授權，詳見 [LICENSE](LICENSE) 與 [NOTICE](NOTICE)。
+本專案採用 **Apache License, Version 2.0** 搭配 **Commons Clause License Condition v1.0** 授權，詳見 [LICENSE](LICENSE) 與 [NOTICE](NOTICE)。
