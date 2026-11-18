@@ -140,3 +140,49 @@ jobs:
           Compress-Archive -Path "$stageDir/ScpCraft.exe" -DestinationPath $zipName -Force
 
           gh release upload "v$version" $zipName --clobber
+
+  sign-release:
+    name: Generate & Sign SHA256SUMS
+    needs: release
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Download release assets, generate SHA256SUMS, and GPG sign
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          version=$(node -e "console.log(require('./src-tauri/tauri.conf.json').version)")
+          mkdir -p release-assets
+          gh release download "v$version" --dir release-assets --clobber
+
+          cd release-assets
+          rm -f SHA256SUMS SHA256SUMS.asc
+          LC_ALL=C sha256sum * > SHA256SUMS
+
+          if [ -n "$GPG_PRIVATE_KEY" ]; then
+            if printf '%s' "$GPG_PRIVATE_KEY" | grep -q "BEGIN PGP PRIVATE KEY BLOCK"; then
+              printf '%s\n' "$GPG_PRIVATE_KEY" > /tmp/gpg-key.asc
+            else
+              printf '%s' "$GPG_PRIVATE_KEY" | base64 -d > /tmp/gpg-key.asc
+            fi
+
+            gpg --batch --import /tmp/gpg-key.asc
+            rm -f /tmp/gpg-key.asc
+
+            if [ -n "$GPG_PASSPHRASE" ]; then
+              printf '%s' "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --armor --detach-sign -o SHA256SUMS.asc SHA256SUMS
+            else
+              gpg --batch --yes --pinentry-mode loopback --passphrase "" --armor --detach-sign -o SHA256SUMS.asc SHA256SUMS
+            fi
+
+            gh release upload "v$version" SHA256SUMS SHA256SUMS.asc --clobber
+          else
+            echo "::notice::GPG_PRIVATE_KEY secret is not configured; uploading unsigned SHA256SUMS only."
+            gh release upload "v$version" SHA256SUMS --clobber
+          fi
