@@ -64,16 +64,12 @@ jobs:
         include:
           - platform: windows-latest
             args: ''
-            linux_arch: ''
           - platform: macos-latest
             args: '--target universal-apple-darwin'
-            linux_arch: ''
           - platform: ubuntu-22.04
             args: ''
-            linux_arch: 'x64'
           - platform: ubuntu-22.04-arm
             args: ''
-            linux_arch: 'arm64'
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -111,7 +107,7 @@ jobs:
         with:
           tagName: v__VERSION__
           releaseName: 'ScpCraft v__VERSION__'
-          releaseBody: 'Automated Windows (.msi/.exe/-portable.zip), macOS Universal (.dmg/.app), and Linux x64 & ARM64 (.deb/.AppImage/-portable.tar.gz) builds.'
+          releaseBody: 'Automated Windows (.msi/.exe/-portable.zip), macOS Universal (.dmg/.app), and Linux x64 & ARM64 (.deb/.AppImage) builds.'
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
@@ -144,27 +140,3 @@ jobs:
           Compress-Archive -Path "$stageDir/ScpCraft.exe" -DestinationPath $zipName -Force
 
           gh release upload "v$version" $zipName --clobber
-
-      - name: Build & upload Linux portable tar.gz
-        if: startsWith(matrix.platform, 'ubuntu-')
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          pnpm tauri build --no-bundle --features portable
-
-          version=$(node -e "console.log(require('./src-tauri/tauri.conf.json').version)")
-          bin_path="src-tauri/target/release/scpcraft"
-          if [ ! -f "$bin_path" ]; then
-            echo "Portable release binary not found at $bin_path"
-            exit 1
-          fi
-
-          stage_dir="portable-stage-linux-${{ matrix.linux_arch }}"
-          mkdir -p "$stage_dir"
-          cp "$bin_path" "$stage_dir/scpcraft"
-          chmod +x "$stage_dir/scpcraft"
-
-          tar_name="ScpCraft_${version}_${{ matrix.linux_arch }}-linux-portable.tar.gz"
-          tar -C "$stage_dir" -czf "$tar_name" scpcraft
-
-          gh release upload "v$version" "$tar_name" --clobber
